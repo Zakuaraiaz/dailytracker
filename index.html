@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4a6fa5">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f4f7fa;--card:#fff;--ink:#1f2d3d;--mute:#6b7c8f;--line:#dde5ee;--steel:#4a6fa5;--steel-d:#2f4e7c;--steel-l:#e6edf6;
+--ok:#2e8b6a;--okb:#e3f4ed;--warn:#b7791f;--warnb:#fdf1da;--stop:#7a8794;--stopb:#eceff2;--urg:#c0392b;--urgb:#fbe9e7;
+padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;color-scheme:light}
+@media (prefers-color-scheme:none){:root:not([data-theme="light"]){color-scheme:dark;--bg:#121a24;--card:#1b2633;--ink:#e6edf5;--mute:#93a3b5;--line:#2b394a;--steel:#7ea3d6;--steel-d:#a9c4ea;--steel-l:#233349;--okb:#16342a;--warnb:#3a2f17;--stopb:#27313c;--urgb:#3d2320}}
+:root[data-theme="none"]{color-scheme:dark;--bg:#121a24;--card:#1b2633;--ink:#e6edf5;--mute:#93a3b5;--line:#2b394a;--steel:#7ea3d6;--steel-d:#a9c4ea;--steel-l:#233349;--okb:#16342a;--warnb:#3a2f17;--stopb:#27313c;--urgb:#3d2320}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:200px 1fr;min-height:100%}
+nav{background:var(--card);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.logo{font-weight:700;color:var(--steel-d);padding:0 8px 14px;font-size:17px}
+.logo span{color:var(--steel)}
+nav button{display:flex;gap:10px;align-items:center;background:none;border:0;padding:10px;border-radius:10px;cursor:pointer;color:var(--mute);text-align:left}
+nav button.on{background:var(--steel-l);color:var(--steel-d);font-weight:600}
+main{padding:18px 22px 90px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0;color:var(--steel-d)}
+.sub{color:var(--mute);font-size:13px}
+.btn{background:var(--steel);color:#fff;border:0;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn.ghost{background:var(--steel-l);color:var(--steel-d)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.week{display:flex;gap:6px;align-items:center;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.day{flex:1;min-width:52px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 4px;cursor:pointer}
+.day small{display:block;color:var(--mute);text-transform:uppercase;font-size:11px}
+.day b{font-size:16px}
+.day.today small{color:var(--steel)}
+.day.sel{background:var(--steel);border-color:var(--steel);color:#fff}.day.sel small{color:#dfe9f7}
+.arrow{background:var(--card);border:1px solid var(--line);border-radius:10px;width:34px;height:44px;cursor:pointer}
+.layout{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
+.urg{background:var(--urgb);border:1px solid color-mix(in srgb,var(--urg) 30%,transparent);border-radius:14px;padding:10px 14px;margin-bottom:16px}
+.urg h3{margin:0 0 6px;font-size:13px;color:var(--urg);text-transform:uppercase;letter-spacing:.04em}
+.urg div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;cursor:pointer;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.person{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;transition:.15s}
+.person.over{outline:2px dashed var(--steel);background:var(--steel-l)}
+.ph{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--steel);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.ph .n{font-weight:600}.ph .r{font-size:12px;color:var(--mute)}
+.ph .btn{margin-left:auto}
+.task{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;cursor:pointer;background:var(--bg)}
+.task:hover{border-color:var(--steel)}
+.tt{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.tt b{font-size:14px}
+.chip{font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.s-proceso{background:var(--okb);color:var(--ok)}.s-parada{background:var(--stopb);color:var(--stop)}
+.s-pendiente{background:var(--warnb);color:var(--warn)}.s-finalizada{background:var(--steel-l);color:var(--steel-d)}
+.meta{display:flex;gap:10px;font-size:12px;color:var(--mute);margin-top:6px;align-items:center}
+.dur{font-weight:700;color:var(--steel-d)}
+.last{font-size:12.5px;margin-top:6px;color:var(--ink);border-left:3px solid var(--steel);padding-left:8px}
+.last i{color:var(--mute);font-style:normal}
+.free{border:1px dashed var(--warn);background:var(--warnb);color:var(--warn);border-radius:12px;padding:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.side{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;position:sticky;top:12px}
+.side h3{margin:0 0 4px;font-size:15px;color:var(--steel-d)}
+.bl{border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:8px;cursor:grab;background:var(--bg);font-size:13px}
+.bl:active{cursor:grabbing}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.row .grow{flex:1;min-width:140px}
+input,select,textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px}
+label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.form input{flex:1;min-width:140px}
+dialog{border:0;border-radius:18px;padding:18px;width:min(660px,94vw);background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(20,35,55,.45)}
+.notes{max-height:150px;overflow:auto;margin-top:6px}
+.notes div{font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}.notes i{font-style:normal;color:var(--steel);font-weight:600}
+.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.tip{font-size:12px;color:var(--mute);margin-top:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi b{display:block;font-size:24px;color:var(--steel-d)}.kpi span{font-size:12px;color:var(--mute)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:16px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}
+.bar{height:8px;border-radius:4px;background:var(--steel)}
+.sync{margin-top:auto;font-size:12px;padding:8px 10px;border-radius:10px;cursor:pointer;background:var(--steel-l);color:var(--steel-d)}.sync.err{background:var(--urgb);color:var(--urg)}.sync.busy{color:var(--mute)}
+.s-baja{background:#e3e8fb;color:#4c5bb5}.task.baja{background:#eef1fb;border-color:#aab6e6}.task.baja:hover{border-color:#6f7fd0}
+.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--mute)}.foot.lg{cursor:pointer}.foot.lg:hover{color:var(--steel-d)}
+.tabs{display:flex;gap:4px;background:var(--steel-l);border-radius:12px;padding:4px;margin:0 0 16px;width:fit-content}.tabs button{border:0;background:none;padding:7px 18px;border-radius:9px;cursor:pointer;color:var(--steel-d);font-weight:600}.tabs button.on{background:var(--card);box-shadow:0 1px 3px rgba(30,50,80,.15)}
+.qf{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}.qf label{margin:0 0 3px}
+.cal{width:18px;height:18px;vertical-align:-4px;flex:none}.rbadge{margin-left:auto;color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:0 6px}
+.task.reunion{background:#eef4fb;border-color:#9fc2ea}.task.reunion:hover{border-color:#2b6cb0}.task.reunion.min{background:#f8eef6;border-color:#d9a4cc}.task.reunion.min:hover{border-color:#a8328f}
+.s-reunion{background:#dce9f7;color:#2b6cb0}.s-reunion-min{background:#f3dcef;color:#a8328f}
+@media(max-width:700px){nav{overflow-x:auto;justify-content:flex-start}nav button{flex:none;position:relative}.rbadge{position:absolute;top:0;right:0;margin:0}}
+.dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:#b9c4d0;border:2px solid var(--card)}.dot.on{background:#2fb36b}
+.dl{max-width:760px;margin:0 auto;text-align:center;padding-top:6px}.dl-name{font-size:clamp(30px,7vw,76px);font-weight:700;color:var(--steel-d);margin:26px 0 8px;line-height:1.1}.dl-n{font-size:clamp(18px,3vw,26px);color:var(--mute);margin-bottom:22px}.dl-t{text-align:left;max-width:560px;margin:22px auto 0}.dl-set{max-width:640px}
+.btn.big{font-size:20px;padding:12px 34px}.btn:disabled{opacity:.5;cursor:default}
+.upd{position:fixed;right:18px;bottom:18px;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(30,50,80,.18);font-size:14px}.upd[hidden]{display:none}
+@media(max-width:700px){.upd{left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom,0px))}}
+.s-vacaciones{background:#d9f2ee;color:#17796b}.task.vacaciones{background:#ecf9f6;border-color:#86cfc3}.task.vacaciones:hover{border-color:#3fa797}
+.ro button[onclick*="openTask("],.ro [onclick*="libre("],.ro [onclick*="pick("],.ro select[onchange*="assign"],.ro .form,.ro button[onclick*="delP"],.ro button[onclick*="editP"],.ro button[onclick*="setAdm"],.ro button[onclick*="resetPw"],.ro button[onclick*="setMain"],.ro [onclick*="loadDemo"]{display:none!important}.ro .bl{cursor:default}.ur .bl[draggable="true"]{cursor:grab}
+.ur [onclick*="pick("],.ur select[onchange*="assign"],.ur .form,.ur button[onclick*="delP"],.ur button[onclick*="editP"],.ur button[onclick*="setAdm"],.ur button[onclick*="resetPw"],.ur button[onclick*="setMain"],.ur [onclick*="loadDemo"],.ur button[onclick*="openTask(0,null)"]{display:none!important}.ur .bl{cursor:default}
+.chk{display:flex;flex-wrap:wrap;gap:6px 14px;border:1px solid var(--line);border-radius:9px;padding:8px;max-height:112px;overflow:auto}.chk label{display:flex;gap:5px;align-items:center;margin:0;font-size:14px;color:var(--ink)}.chk input{width:auto}
+.pi{width:1.05em;height:1.05em;fill:#e8543a;vertical-align:-2px;margin-right:3px}.urg h3 .pi{fill:var(--urg)}
+.ms-f{display:flex;align-items:center;gap:6px;min-height:38px;padding:4px 8px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:9px;cursor:pointer}.ms-f:hover{border-color:var(--steel)}
+.ms-cs{display:flex;flex-wrap:wrap;gap:5px;flex:1}.ms-ar{margin-left:auto;color:var(--mute)}.ms-ph{color:var(--mute);padding-left:2px}
+.ms-chip{background:var(--steel-l);color:var(--steel-d);border-radius:6px;padding:2px 8px;display:inline-flex;gap:7px;align-items:center;font-size:13px;font-weight:600}.ms-chip b{cursor:pointer;color:var(--mute)}.ms-chip b:hover{color:var(--urg)}
+.ms-p{border:1px solid var(--line);border-radius:10px;margin-top:5px;background:var(--card);box-shadow:0 8px 22px rgba(30,50,80,.16);overflow:hidden}
+.ms-p input{border:0;border-bottom:1px solid var(--line);border-radius:0}#ms-l{max-height:190px;overflow:auto}
+.ms-o{padding:9px 12px;cursor:pointer}.ms-o:hover{background:var(--steel-l)}.ms-o.on{background:var(--steel-l);color:var(--steel-d);font-weight:600}
+.s-libre{background:#fde3c8;color:#b45309}.task.libre{background:#fff3e3;border-color:#f3b676}.task.libre:hover{border-color:#e08a2e}
+@media(max-width:700px){.sync{display:none}}
+.b-ok{background:var(--steel)}.b-warn{background:#d69e2e}.b-hi{background:#c0392b}
+.t-ok{color:var(--steel-d)}.t-warn{color:#b7791f}.t-hi{color:#c0392b}
+.lnk{cursor:pointer;color:var(--steel-d);font-weight:600}.lnk:hover{text-decoration:underline}
+.th{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-bottom:12px}.th input{width:64px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.side{display:none}}
+@media(max-width:700px){
+.app{grid-template-columns:1fr}
+nav{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex-direction:column;gap:2px;font-size:11px;padding:6px 6px;align-items:center}.logo{display:none}
+main{padding:14px 12px 90px}
+}
+.s-error{background:#fde0e0;color:#b42318}
+.errg{border:1px solid #f0a3a3;background:#fff1f1;border-radius:12px;margin-bottom:8px;overflow:hidden}
+.errh{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:9px 10px;cursor:pointer}.errh:hover{background:#ffe8e8}
+.errt{font-weight:700;color:#b42318}
+.errc{font-size:12px;display:flex;gap:5px;flex-wrap:wrap}.errc span{border-radius:20px;padding:1px 8px;font-weight:600;background:#fde0e0;color:#b42318}.errc .ec-parada{background:#eceff2;color:#5c6b79}.errc .ec-pendiente{background:#fdf1da;color:#b7791f}
+.errm{font-size:12px;color:var(--mute);margin-left:auto;white-space:nowrap}
+.errl{max-height:260px;overflow:auto;border-top:1px solid #f0c4c4;background:rgba(255,255,255,.6)}
+.erl{display:flex;gap:6px;align-items:center;padding:5px 10px;font-size:12.5px;cursor:pointer;border-bottom:1px solid #f6dede}.erl:hover{background:#ffe8e8}
+.erl .ert{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.erl .ers{color:var(--mute);font-size:11.5px;white-space:nowrap}.erl .chip{flex:none}
+.errf{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:12px;border-top:1px solid #f0c4c4}.task.error{background:#fff1f1;border-color:#f0a3a3}.task.error:hover{border-color:#d44}
+textarea.mono{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;font-size:12.5px;line-height:1.35}
+.rem{position:fixed;top:14px;right:14px;z-index:30;display:flex;flex-direction:column;gap:8px;max-width:360px}.rem[hidden]{display:none}
+.remc{background:var(--card);border:1px solid var(--line);border-left:4px solid #2b6cb0;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(30,50,80,.22);font-size:14px}.remc.min{border-left-color:#a8328f}
+@media(max-width:700px){.rem{left:12px;right:12px;max-width:none;top:calc(10px + env(safe-area-inset-top,0px))}}
+.pg{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:8px;font-size:12px;color:var(--mute)}.pg button:disabled{opacity:.35;cursor:default}
+#boot{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .3s}
+#boot.off{opacity:0;pointer-events:none}
+#boot img{width:72px;height:72px;border-radius:18px;box-shadow:0 6px 20px rgba(30,50,80,.18)}
+#boot b{font-size:22px;color:var(--steel-d);letter-spacing:.2px}#boot b span{font-weight:400;color:var(--steel)}
+#boot .bar{width:min(240px,60vw);height:5px;border-radius:5px;background:var(--steel-l);overflow:hidden}
+#boot .bar i{display:block;height:100%;width:40%;border-radius:5px;background:var(--steel);animation:bootb 1.1s ease-in-out infinite}
+#boot p{margin:0;font-size:13px;color:var(--mute);min-height:18px;text-align:center;padding:0 24px}
+@keyframes bootb{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+@media(prefers-reduced-motion:reduce){#boot .bar i{animation:none;width:100%;opacity:.5}}
+</style>
+</head>
+<body>
+<div id="boot" role="status" aria-live="polite"><img src="icon.svg" alt=""><b>Daily<span>Tracker</span></b><div class="bar"><i></i></div><p>Abriendo la app…</p></div>
+<script>setTimeout(function(){var b=document.getElementById('boot');if(b&&!window.__up){var p=b.querySelector('p');if(p)p.textContent='La app está tardando demasiado. Recarga la página; si sigue igual, revisa la conexión.'}},30000)</script>
+<div class="app">
+<nav>
+ <div class="logo">Daily<span>Tracker</span></div>
+ <button data-v="diario" class="on">📋 Diario</button>
+ <button data-v="daily">🎲 Daily</button>
+ <button data-v="prio"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Prioritarias</button>
+ <button data-v="backlog">🗂️ Backlog</button>
+ <button data-v="reu">📅 Reuniones</button>
+ <button data-v="stats">📊 Estadísticas</button>
+ <button data-v="equipo">⚙️ Equipo</button>
+ <div id="sync" class="sync" onclick="openCfg()">Local</div>
+</nav>
+<main id="main"></main>
+</div>
+
+<dialog id="dlg"></dialog><div id="rem" class="rem" hidden></div>
+<div id="upd" class="upd" hidden><span>🔄 Hay cambios nuevos</span><button class="btn sm" onclick="applyPending()">Actualizar</button><button class="btn ghost sm" onclick="dismissUpd()">Ahora no</button></div>
+
+<script>window.addEventListener('error',function(e){var m=document.getElementById('main');if(m&&!m.firstChild){var d=document.createElement('div');d.style.cssText='padding:24px;max-width:560px';d.textContent='Error al iniciar la app ('+e.message+'). Recarga la página con Ctrl+F5; si sigue igual, avisa al administrador.';m.appendChild(d)}});</script>
+<script>
+const $=s=>document.querySelector(s);
+const f=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let today=new Date();today.setHours(0,0,0,0);
+const off=n=>{const d=new Date(today);d.setDate(d.getDate()+n);return f(d)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ST={proceso:'En proceso',parada:'Parada',pendiente:'Pendiente',finalizada:'Finalizada'};
+let view='diario',sel=f(today),wk=0,uid=100;
+
+// Datos de ejemplo (en la app real: JSON)
+let people=[
+ {id:1,name:'Laura Gómez',role:'Backend'},{id:2,name:'Carlos Ruiz',role:'Frontend'},
+ {id:3,name:'Marta Peña',role:'QA'},{id:4,name:'Iván Soto',role:'DevOps'},
+ {id:5,name:'Ana Vidal',role:'Backend'},{id:6,name:'Pablo Díaz',role:'Analista'}];
+let tasks=[
+ {id:1,title:'API de facturación',desc:'Endpoints de emisión y anulación',start:off(-6),end:'',status:'proceso',owner:1,urgent:true,notes:[{d:off(-6),t:'Arranca el diseño'},{d:off(-1),t:'Continúa: problemas con el entorno de pruebas'},{d:off(0),t:'Pendiente de revisión de contrato'}]},
+ {id:2,title:'Pantalla de informes',desc:'Filtros y exportación',start:off(-3),end:'',status:'proceso',owner:2,urgent:false,notes:[{d:off(-3),t:'Maqueta aprobada'}]},
+ {id:3,title:'Regresión release 4.2',desc:'Casos críticos',start:off(-2),end:'',status:'proceso',owner:3,urgent:true,notes:[{d:off(-2),t:'20 de 60 casos ejecutados'}]},
+ {id:4,title:'Pipeline de despliegue',desc:'Migrar a nuevo agente',start:off(-9),end:'',status:'parada',owner:4,urgent:false,notes:[{d:off(-5),t:'Parada: esperando permisos'}]},
+ {id:5,title:'Migración de usuarios',desc:'Script de carga',start:off(-12),end:off(-4),status:'finalizada',owner:5,urgent:false,notes:[]},
+ {id:6,title:'Notificaciones por email',desc:'Plantillas y colas',start:'',end:'',status:'pendiente',owner:null,urgent:false,notes:[]},
+ {id:7,title:'Revisar logs de producción',desc:'Picos de errores 500',start:'',end:'',status:'pendiente',owner:null,urgent:true,notes:[]},
+ {id:8,title:'Documentar API pública',desc:'',start:'',end:'',status:'pendiente',owner:null,urgent:false,notes:[]}];
+
+const DEMO=JSON.stringify({people,tasks});people=[];tasks=[];
+const days=t=>t.start?Math.max(1,Math.round((new Date(t.end||f(today))-new Date(t.start))/864e5)+1):0;
+const dur=t=>{const n=days(t);return n?(n===1?'1 día':n+' días'):'—'};
+const fmt=s=>s?new Date(s).toLocaleDateString('es-ES',{day:'2-digit',month:'short',timeZone:'UTC'}):'—';
+let LIM={warn:5,high:10};
+const has=(t,id)=>(t.owners||[]).includes(id);
+const PI='<svg class="pi" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+function jor(a,b){if(!a||!b)return 0;const e=new Date(b);let d=new Date(a),n=0;for(;d<=e;d.setUTCDate(d.getUTCDate()+1)){const w=d.getUTCDay();if(w&&w<6)n++}return n}
+const jtxt=(a,b)=>{const n=jor(a,b);return n?n+(n===1?' jornada':' jornadas'):''};
+const names=t=>(t.owners||[]).map(o=>(person(o)||{}).name).filter(Boolean).join(', ');
+const isT=t=>!t.tipo||t.tipo==='tarea'||t.tipo==='error';
+const nid=()=>Date.now()*10+Math.floor(Math.random()*10);
+const lv=n=>n>=LIM.high?'hi':n>=LIM.warn?'warn':'ok';
+const ini=n=>n.split(' ').map(x=>x[0]).slice(0,2).join('');
+const person=id=>people.find(p=>p.id===id);
+
+function week(){
+ const base=new Date(today);const dow=(base.getDay()+6)%7;base.setDate(base.getDate()-dow+wk*7);
+ let h='<button class="arrow" onclick="wk--;draw()">‹</button>';
+ for(let i=0;i<7;i++){const d=new Date(base);d.setDate(base.getDate()+i);const k=f(d);
+  h+=`<div class="day ${k===f(today)?'today':''} ${k===sel?'sel':''}" onclick="sel='${k}';draw()"><small>${d.toLocaleDateString('es-ES',{weekday:'short'})}</small><b>${d.getDate()}</b></div>`}
+ return h+'<button class="arrow" onclick="wk++;draw()">›</button>';
+}
+const ERR_GROUP=3;
+let errOpen={};try{errOpen=JSON.parse(localStorage.getItem('dt_eo')||'{}')}catch(e){}
+function errTog(pid){errOpen[pid]=!errOpen[pid];try{localStorage.setItem('dt_eo',JSON.stringify(errOpen))}catch(e){}draw()}
+function errQuery(pid){q={txt:'',per:String(pid),est:'_open',tip:'error',pri:'',by:'start',d1:'',d2:'',late:false,ord:'created-desc'};stTab='cons';view='stats';draw()}
+function taskList(ts,pid){
+ const er=ts.filter(t=>t.tipo==='error'),rest=ts.filter(t=>t.tipo!=='error');
+ if(er.length<ERR_GROUP)return ts.map(t=>taskCard(t,pid)).join('');
+ const by={};er.forEach(t=>by[t.status]=(by[t.status]||0)+1);
+ const dmax=Math.max(...er.map(t=>days(t))),open=!!errOpen[pid];
+ const chips=Object.entries(by).map(([k,n])=>`<span class="ec-${k}">${n} ${k==='proceso'?'en proceso':k==='parada'?(n===1?'parada':'paradas'):ST[k].toLowerCase()}</span>`).join('');
+ const lines=er.slice().sort((a,b)=>days(b)-days(a)).map(t=>`<div class="erl" onclick="openTask(${t.id})" title="${esc(t.title)}"><span class="chip s-${t.status}">${ST[t.status]}</span>${t.urgent?PI:''}<span class="ert">${esc(t.title)}</span><span class="ers">${t.start?dur(t):''}</span></div>`).join('');
+ return rest.map(t=>taskCard(t,pid)).join('')+`<div class="errg"><div class="errh" onclick="errTog(${pid})"><span class="errt">🐞 ${er.length} errores</span><span class="errc">${chips}</span><span class="errm">${dmax?'más antiguo '+dmax+(dmax===1?' día':' días'):''} ${open?'▴':'▾'}</span></div>${open?`<div class="errl">${lines}</div><div class="errf"><span class="lnk" onclick="errQuery(${pid})">Ver en Consultas ›</span><span class="sub">${er.length} abiertos</span></div>`:''}</div>`}
+function taskCard(t,pid){if(t.tipo==='reunion')return reuCard(t,pid);
+ const n=t.notes[t.notes.length-1];
+ return `<div class="task${t.tipo==='error'?' error':isT(t)?'':' '+t.tipo}" onclick="openTask(${t.id})">
+ <div class="tt"><b>${t.tipo==='error'?'🐞 ':''}${t.urgent?PI:''}${esc(t.title)}</b><span class="chip ${isT(t)?'s-'+t.status:'s-'+t.tipo}">${isT(t)?ST[t.status]:t.tipo==='baja'?(t.status==='finalizada'?'Alta':'De baja'):t.tipo==='vacaciones'?(t.status==='finalizada'?'Vacaciones terminadas':'De vacaciones'):(t.status==='finalizada'?'Periodo cerrado':'Desasignado')}</span></div>
+ <div class="meta"><span>⏱ <span class="dur t-${t.status==='finalizada'?'ok':lv(days(t))}">${dur(t)}</span></span><span>Inicio ${fmt(t.start)}</span>${t.est&&isT(t)&&t.status!=='finalizada'?`<span class="${t.est<f(today)?'t-hi':''}">Est. ${fmt(t.est)}${jtxt(t.start,t.est)?' · '+jtxt(t.start,t.est):''}${t.est<f(today)?' · retrasada':''}</span>`:''}${t.end?`<span>Fin ${fmt(t.end)}</span>`:''}</div>
+ ${t.owners.length>1?`<div class="sub" style="margin-top:4px">👥 Con ${esc(t.owners.filter(o=>o!==pid).map(o=>(person(o)||{}).name||'?').join(', '))}</div>`:''}${n?`<div class="last"><i>${fmt(n.d)}</i> · ${esc(n.t)}</div>`:''}</div>`;
+}
+function diario(){
+ const urg=tasks.filter(t=>t.urgent&&t.status!=='finalizada');
+ const bl=tasks.filter(t=>!t.owners.length&&t.status==='pendiente');blPg=Math.max(0,Math.min(blPg,Math.floor((bl.length-1)/20)));
+ const lbl=new Date(sel).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+ return `<div class="top"><div><h1>Daily · ${lbl}</h1><div class="sub">${sel===f(today)?'Hoy · ':''}${people.length} personas · ${tasks.filter(t=>t.status==='proceso'&&isT(t)).length} tareas en proceso${tasks.filter(t=>t.tipo==='error'&&t.status==='proceso').length?' (🐞 '+tasks.filter(t=>t.tipo==='error'&&t.status==='proceso').length+' errores)':''}</div></div>
+ <button class="btn" onclick="openTask(0)">+ Nueva tarea</button></div>
+ <div class="week">${week()}</div>
+ <div class="layout"><div>
+ ${urg.length?`<div class="urg"><h3>${PI}Prioritarias</h3>${urg.map(t=>`<div onclick="openTask(${t.id})"><span><b>${esc(t.title)}</b> · ${t.owners.length?esc(names(t)):'Sin asignar'}</span><span>${dur(t)}</span></div>`).join('')}</div>`:''}
+ <div class="grid">${people.length?'':`<div class="free" style="grid-column:1/-1"><span>Aún no hay equipo. Añade personas en Equipo.</span><button class="btn sm" onclick="loadDemo()">Cargar ejemplo</button></div>`}${people.map(p=>{
+  const ts=tasks.filter(t=>has(t,p.id)&&t.status!=='finalizada');
+  return `<div class="person" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="drop(event,${p.id})">
+  <div class="ph"><div class="av">${esc(ini(p.name))}</div><div><div class="n">${esc(p.name)}</div><div class="r">${esc(p.role)}</div></div>${canAdd(p.id)?`<button class="btn ghost sm" onclick="openTask(0,${p.id})">+ Añadir</button>`:''}</div>
+  ${ts.length?taskList(ts,p.id):`<div class="free"><span>Sin tarea asignada</span><span style="display:flex;gap:6px">${canAdd(p.id)?`<button class="btn ghost sm" onclick="libre(${p.id})">Registrar</button>`:''}<button class="btn sm" onclick="pick(${p.id})">Del backlog</button></span></div>`}</div>`}).join('')}</div></div>
+ <aside class="side"><h3>Backlog (${bl.length})</h3><div class="sub">Arrastra una tarea sobre una persona</div>
+ ${bl.slice(blPg*20,blPg*20+20).map(t=>`<div class="bl" draggable="${!ro()&&(!isUser()||t.tipo==='error')}" ondragstart="event.dataTransfer.setData('t',${t.id})">${t.tipo==='error'?'🐞 ':''}${t.urgent?PI:''}${esc(t.title)}</div>`).join('')||'<div class="tip">Backlog vacío</div>'}${bl.length>20?`<div class="pg"><button class="btn ghost sm" ${blPg<=0?'disabled':''} onclick="blPage(-1)">‹</button><span>${blPg*20+1}–${Math.min(bl.length,blPg*20+20)} de ${bl.length}</span><button class="btn ghost sm" ${(blPg+1)*20>=bl.length?'disabled':''} onclick="blPage(1)">›</button></div>`:''}
+ </aside></div>`;
+}
+function equipo(){
+ return `<div class="top"><div><h1>Configuración · Equipo</h1><div class="sub">Alta de personas del proyecto${linked()?' · '+people.filter(online).length+' en línea':''}</div></div></div>
+ <div class="row"><div class="grow"><b>Sincronización con GitHub</b><div class="sub">${repo()?(me()&&me().admin?esc(repo())+' · administrador':ro()?'Conectado · invitado (solo lectura)':'Conectado'):'No configurada · los datos solo están en este navegador'}</div></div><button class="btn ghost sm" onclick="openCfg()">Configurar</button></div>
+ ${linked()&&!ro()?`<div class="row"><div class="grow"><b>Tu usuario</b><div class="sub">${me()?esc(me().name)+' · '+(me().admin?'Administrador':'Usuario'):'Sin elegir'}</div></div><button class="btn ghost sm" onclick="openMe()">Cambiar</button>${me()&&!me().admin&&mainAdm()===null?`<button class="btn sm" onclick="openAdmin()">Soy administrador…</button>`:''}${isAdmin()?`<button class="btn ghost sm" onclick="openPw()">Contraseña admin</button>`:''}</div>`:''}
+ <div class="form"><input id="pn" placeholder="Nombre"><input id="pr" placeholder="Rol (Backend, QA…)"><button class="btn" onclick="addP()">Añadir</button></div>
+ ${people.map(p=>`<div class="row"><div class="av" style="position:relative">${esc(ini(p.name))}<span class="dot${online(p)?' on':''}" title="${online(p)?'Conectado ahora':'No conectado'}"></span></div><div class="grow"><b>${esc(p.name)}</b>${online(p)?' <span class="sub" style="color:#2e8b6a">● en línea</span>':''}<div class="sub">${esc(p.role)} · ${tasks.filter(t=>has(t,p.id)&&isT(t)&&t.status!=='finalizada').length} tareas activas${p.admin?' · <b>Administrador</b>'+(mainAdm()===p.id?' ★ principal':''):''}${linked()&&isAdmin()&&!p.pw?' · sin contraseña':''}${!online(p)&&pres[p.id]?' · visto '+ago(pres[p.id]):''}</div></div>${linked()&&isMain()&&mainAdm()!==p.id?`<button class="btn ghost sm" onclick="setAdm(${p.id})">${p.admin?'Quitar admin':'Hacer admin'}</button>`:''}${linked()&&isAdmin()&&p.pw?`<button class="btn ghost sm" onclick="resetPw(${p.id})">Restablecer clave</button>`:''}${isMain()&&p.admin&&auth&&mainAdm()!==p.id?`<button class="btn ghost sm" onclick="setMain(${p.id})">Hacer principal</button>`:''}<button class="btn ghost sm" onclick="editP(${p.id})">Editar</button><button class="btn ghost sm" onclick="delP(${p.id})">Quitar</button></div>`).join('')}
+ <div class="tip">Datos guardados en un fichero JSON (en esta maqueta solo en memoria).</div>`;
+}
+function idle(p){const e=tasks.filter(t=>has(t,p.id)&&t.end&&isT(t)).map(t=>t.end).sort().pop();return Math.max(0,Math.round((new Date(f(today))-new Date(e||p.alta||f(today)))/864e5))}
+function statsAct(){
+ const real=tasks.filter(isT),lib=tasks.filter(t=>t.tipo==='libre'),baj=tasks.filter(t=>t.tipo==='baja'),vac=tasks.filter(t=>t.tipo==='vacaciones'),sp=tasks.filter(t=>!isT(t)&&t.tipo!=='reunion');
+ const fin=real.filter(t=>t.status==='finalizada');
+ const avg=a=>a.length?Math.round(a.reduce((x,t)=>x+days(t),0)/a.length):0;
+ const bl=real.filter(t=>!t.owners.length&&t.status==='pendiente');
+ const d=n=>n===1?'1 día':n+' días';
+ const open=t=>t.status!=='finalizada';
+ const rows=people.map(p=>{
+  const ts=real.filter(t=>has(t,p.id)),ls=lib.filter(t=>has(t,p.id)),bs=baj.filter(t=>has(t,p.id)),vs=vac.filter(t=>has(t,p.id));
+  const act=ts.filter(t=>t.status==='proceso'||t.status==='parada').sort((a,b)=>days(b)-days(a));
+  const la=ls.find(open),ba=bs.find(open),va=vs.find(open),fn=ts.filter(t=>t.status==='finalizada');
+  return{p,act,la,ba,va,free:!ba&&!va&&(!!la||!act.length),v:ba?days(ba):va?days(va):la?days(la):act.length?days(act[0]):idle(p),fin:fn.length,med:avg(fn),lt:ls.reduce((x,t)=>x+days(t),0),ln:ls.length,bt:bs.reduce((x,t)=>x+days(t),0),bn:bs.length,vt:vs.reduce((x,t)=>x+days(t),0),vn:vs.length}});
+ let max=1;rows.forEach(r=>{if(r.v>max)max=r.v});tasks.forEach(t=>{const n=days(t);if(n>max)max=n});
+ const bar=(n,l)=>`<div class='bar b-${l}' style='width:${Math.max(3,n/max*100)}%'></div>`;
+ const all=real.filter(t=>t.owners.length).map(t=>[days(t),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+ const lc=lib.filter(t=>t.status==='finalizada');
+ return `
+ <div class='kpis'>
+ <div class='kpi'><b>${avg(fin)?d(avg(fin)):'—'}</b><span>Tiempo medio por tarea finalizada</span></div>
+ <div class='kpi'><b>${real.filter(t=>t.status==='proceso').length}</b><span>En proceso</span></div>
+ <div class='kpi'><b>${real.filter(t=>t.status==='parada').length}</b><span>Paradas</span></div>
+ <div class='kpi'><b>${rows.filter(r=>r.free).length}</b><span>Personas sin tarea</span></div>
+ <div class='kpi'><b>${rows.filter(r=>r.ba).length}</b><span>De baja</span></div>
+ <div class='kpi'><b>${rows.filter(r=>r.va).length}</b><span>De vacaciones</span></div>
+ <div class='kpi'><b>${lc.length?d(avg(lc)):'—'}</b><span>Tiempo medio hasta asignar tarea</span></div>
+ <div class='kpi'><b>${bl.length}</b><span>Pendientes de asignar</span></div></div>
+ <div class='th'>Azul = normal · Ámbar desde <input type='number' min='1' value='${LIM.warn}' onchange='LIM.warn=+this.value||1;draw()'> días · Rojo desde <input type='number' min='1' value='${LIM.high}' onchange='LIM.high=+this.value||1;draw()'> días</div>
+ <div class='tw'><table><tr><th>Persona</th><th>Situación actual</th><th style='width:20%'>Tiempo</th><th>Finalizadas</th><th>Media días/tarea</th><th>Total sin tarea · ausencias</th></tr>
+ ${rows.map(r=>{const l=r.ba||r.va?'ok':lv(r.v);return `<tr><td><b>${esc(r.p.name)}</b><div class='sub'>${esc(r.p.role)}</div></td>
+ <td>${r.ba?`<div><span class='chip s-baja'>De baja</span> <span class='lnk' onclick='openTask(${r.ba.id})'>desde ${fmt(r.ba.start)}</span> <span class='sub'>· ${d(days(r.ba))}</span></div>`:''}${r.va?`<div><span class='chip s-vacaciones'>De vacaciones</span> <span class='lnk' onclick='openTask(${r.va.id})'>desde ${fmt(r.va.start)}</span> <span class='sub'>· ${d(days(r.va))}</span></div>`:''}${r.act.slice(0,ACT_MAX).map(t=>`<div><span class='lnk' onclick='openTask(${t.id})'>${esc(t.title)}</span> <span class='sub'>· ${d(days(t))}${t.status==='parada'?' · parada':''}</span></div>`).join('')}${r.act.length>ACT_MAX?`<div class='sub'>… y ${r.act.length-ACT_MAX} más · <span class='lnk' onclick='stGo("p",${r.p.id})'>ver todas</span></div>`:''}${r.la?`<div><span class='chip s-libre'>Desasignado</span> <span class='lnk' onclick='openTask(${r.la.id})'>desde ${fmt(r.la.start)}</span> <span class='sub'>· ${d(days(r.la))}</span></div>`:(r.act.length||r.ba||r.va)?'':`<b class='t-${l}'>Sin tarea</b> <span class='sub'>· desde hace ${d(r.v)} (sin registrar)</span>`}</td>
+ <td>${bar(r.v,l)}<div class='sub t-${l}'>${d(r.v)}</div></td><td>${r.fin}</td><td>${r.med||'—'}</td><td>${r.ln?d(r.lt)+` <span class='sub'>· ${r.ln} ${r.ln===1?'periodo':'periodos'}</span>`:'—'}${r.bn?`<div class='sub'>Baja: ${d(r.bt)}</div>`:''}${r.vn?`<div class='sub'>Vacaciones: ${d(r.vt)}</div>`:''}</td></tr>`}).join('')}</table></div>
+ ${sp.length?`<h3 style='color:var(--steel-d)'>Periodos sin tarea, bajas y vacaciones</h3><div class='tw'><table><tr><th>Persona</th><th>Tipo</th><th>Desde</th><th>Hasta</th><th style='width:28%'>Tiempo</th></tr>
+ ${sp.slice().sort((a,b)=>b.start.localeCompare(a.start)).map(t=>`<tr><td><span class='lnk' onclick='openTask(${t.id})'>${esc(names(t)||'—')}</span></td><td><span class='chip s-${t.tipo}'>${{baja:'Baja',vacaciones:'Vacaciones'}[t.tipo]||'Sin tarea'}</span></td><td>${fmt(t.start)}</td><td>${t.end?fmt(t.end):`<span class='chip s-${t.tipo}'>En curso</span>`}</td><td>${bar(days(t),t.tipo!=='libre'||t.status==='finalizada'?'ok':lv(days(t)))}<div class='sub'>${d(days(t))}</div></td></tr>`).join('')}</table></div>`:''}
+ <h3 style='color:var(--steel-d)'>Tiempo por tarea</h3>
+ <div class='tw'><table><tr><th>Tarea</th><th>Persona</th><th>Estado</th><th style='width:28%'>Tiempo</th></tr>
+ ${all.slice(0,stLim.all).map(t=>{const l=t.status==='finalizada'?'ok':lv(days(t));return `<tr><td><span class='lnk' onclick='openTask(${t.id})'>${t.urgent?PI:''}${esc(t.title)}</span></td><td>${esc(names(t))}</td><td><span class='chip s-${t.status}'>${ST[t.status]}</span></td><td>${bar(days(t),l)}<div class='sub'>${d(days(t))}</div></td></tr>`}).join('')}</table></div>${stFoot('all',Math.min(all.length,stLim.all),all.length)}
+ <h3 style='color:var(--steel-d)'>Tareas pendientes (${bl.length})</h3>
+ ${bl.slice(0,stLim.bl).map(t=>`<div class='row' style='cursor:pointer' onclick='openTask(${t.id})'><div class='grow'><b>${t.tipo==='error'?'🐞 ':''}${t.urgent?PI:''}${esc(t.title)}</b><div class='sub'>${esc(dshort(t))||'Sin descripción'}</div></div><span class='chip s-pendiente'>Sin asignar</span></div>`).join('')||"<div class='tip'>No hay tareas pendientes.</div>"}${stFoot('bl',Math.min(bl.length,stLim.bl),bl.length)}`;
+}
+const VER='0.20.1',BUILD='28 oct 2026';
+const LOGS=[['0.20.1','Estadísticas con límites: 50 filas por bloque con «Mostrar 50 más», máximo 5 tareas por persona en Situación actual, búsqueda con retardo e índice en caché'],['0.20.0','Pantalla de carga; los datos se guardan comprimidos (de ~4,8 MB a ~0,2 MB); caché local en IndexedDB y sondeo sin descarga cuando no hay cambios'],['0.19.1','Los errores de cada persona se agrupan en un resumen (número en proceso, paradas, el más antiguo) que se despliega en una lista compacta'],['0.19.0','Unión de versiones: tipo Error (🐞) con importación desde Excel, asignación y arrastre por cualquier usuario, backlog de Inicio paginado de 20 en 20, búsqueda en Backlog, avisos de reuniones y lectura robusta de ficheros grandes'],['0.18.0','Búsqueda en el Backlog y aviso de las reuniones a sus asistentes con la app abierta'],['0.17.1','Corrección: la app se quedaba en blanco al arrancar'],['0.17.0','Tipo Reunión (interna o con el Ministerio) con hora, cierre automático y menú Reuniones'],['0.16.0','Estadísticas con dos pestañas: Actual y Consultas del histórico de tareas'],['0.15.2','Solo el administrador principal puede crear o quitar administradores'],['0.15.1','El menú Daily solo lo ve el administrador principal, quien creó la contraseña de administrador'],['0.15.0','Daily con sorteo aleatorio de intervención y indicador de quién está conectado'],['0.14.0','Se usa «tarea» en todos los textos y la app se actualiza sola al cambiar el día'],['0.13.0','El repositorio de datos viene en config.json; el campo solo lo ve un administrador'],['0.12.3','El registro de novedades solo lo ve un administrador'],['0.12.2','Los campos Fichero y Rama de Configurar solo los ve un administrador'],['0.12.1','El selector de rol de Configurar solo lo ve un administrador'],['0.12.0','Aviso discreto cuando alguien cambia datos, con botón para actualizar'],['0.11.0','Contraseña personal al elegir usuario, con restablecimiento por un administrador'],['0.10.2','Las tareas de otras personas se abren en solo lectura, sin botón Guardar'],['0.10.1','Los usuarios pueden finalizar, pausar y reabrir sus propias tareas'],['0.10.0','Usuarios por persona, administradores con contraseña y permisos de edición'],['0.9.1','El selector de personas usa el mismo estilo que el resto de campos'],['0.9.0','Selector múltiple con etiquetas, tiempo estimado en jornadas e icono nuevo de prioritarias'],['0.8.0','Menú Prioritarias, tareas compartidas, fin estimado, editar personas y aviso al borrar'],['0.7.0','Modo invitado (solo lectura) según el token'],['0.6.0','Tarea de vacaciones'],['0.5.0','Tipos de tarea (normal, sin tarea, baja) y pie con versión'],['0.4.0','Tarea «sin tarea» y estadísticas de tiempo desasignado'],['0.3.0','Seguimiento diario en forma de grid'],['0.2.0','Sincronización con GitHub, PWA instalable'],['0.1.0','Diario, backlog, equipo y estadísticas']];
+function openLog(){if(!canLog())return;const d=$('#dlg');d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">Daily Tracker v${VER} beta</h2><div class="tip">Compilación ${BUILD}</div><div class="notes" style="max-height:none;margin-top:10px">${LOGS.map(l=>`<div><i>${l[0]}</i> · ${l[1]}</div>`).join('')}</div><div class="acts"><button class="btn" onclick="$('#dlg').close()">Cerrar</button></div>`;d.showModal()}
+const TD={libre:'Sin tarea asignada',baja:'De baja',vacaciones:'Vacaciones',reunion:'Reunión'};
+function tipoChg(init){const k=$('#f-k').value,sp=k!=='tarea'&&k!=='error',ti=$('#f-t');
+ if(!init&&(!ti.value.trim()||Object.values(TD).includes(ti.value)))ti.value=TD[k]||'';
+ const re=k==='reunion';$('#f-d').classList.toggle('mono',k==='error');$('#f-dw').style.display=sp&&!re?'none':'';$('#f-uw').style.display=sp?'none':'';$('#f-xw').style.display=sp?'none':'';$('#f-cw').style.display=sp?'none':'';$('#f-rw').style.display=re?'':'none';$('#f-rt').style.display=re?'':'none';$('#f-ew').style.display=re?'none':'';$('#f-il').textContent=re?'Fecha':'Fecha inicio';
+ const sv=$('#f-s').value,fs=$('#f-s');
+ fs.innerHTML=(sp?[['proceso','En curso'],['finalizada',k==='baja'?'Alta (finalizada)':k==='vacaciones'?'Vuelta (finalizada)':k==='reunion'?'Cerrada (finalizada)':'Cerrado (finalizada)']]:Object.entries(ST)).map(([a,b])=>`<option value="${a}">${b}</option>`).join('');
+ fs.value=[...fs.options].some(o=>o.value===sv)?sv:'proceso'}
+function norm(){tasks.forEach(t=>{if(!t.tipo)t.tipo=t.libre?'libre':'tarea';delete t.libre;if(!t.owners)t.owners=t.owner!=null?[t.owner]:[];delete t.owner;if(!t.created)t.created=t.start||(t.notes&&t.notes[0]&&t.notes[0].d)||f(today);if(t.est===undefined)t.est=''});autoClose()}
+const ST_PAGE=50,ACT_MAX=5;
+let stLim={all:ST_PAGE,bl:ST_PAGE,q:ST_PAGE};
+function stMore(k){stLim[k]+=ST_PAGE;if(k==='q'){qDraw();return}const y=scrollY,m=$('#main'),ys=m?m.scrollTop:0;draw();scrollTo(0,y);if(m)m.scrollTop=ys}
+function stGo(k,pid){q={txt:'',per:pid?String(pid):(k==='bl'?'_none':''),est:k==='bl'?'pendiente':'_open',tip:'',pri:'',by:'start',d1:'',d2:'',late:false,ord:'created-desc'};stLim.q=ST_PAGE;stTab='cons';view='stats';draw();scrollTo(0,0)}
+const stFoot=(k,shown,total)=>total>shown?`<div class='tip'>Mostrando ${shown} de ${total}. <button class='btn ghost sm' onclick="stMore('${k}')">Mostrar ${ST_PAGE} más</button> <button class='btn ghost sm' onclick="stGo('${k}')">Buscar y filtrar en Consultas</button></div>`:'';
+let stLim_t=null;
+let stTab='act',q={txt:'',per:'',est:'',tip:'',pri:'',by:'start',d1:'',d2:'',late:false,ord:'created-desc'};
+const nz=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function qSet(k,v){q[k]=v;stLim.q=ST_PAGE;qDraw()}
+function qTxt(v){q.txt=v;stLim.q=ST_PAGE;clearTimeout(stLim_t);stLim_t=setTimeout(qDraw,220)}
+const sIdx=new WeakMap();
+function sKey(t){const e=sIdx.get(t),nt=(t.notes||[]).map(n=>n.t).join('\u0001');
+ if(e&&e.a===t.title&&e.b===t.desc&&e.c===nt)return e.s;
+ const s=nz(t.title+' '+(t.desc||'')+' '+nt);sIdx.set(t,{a:t.title,b:t.desc,c:nt,s});return s}
+function qDraw(){const e=$('#q-res');if(e)e.innerHTML=qHtml()}
+function qClear(){q={txt:'',per:'',est:'',tip:'',pri:'',by:'start',d1:'',d2:'',late:false,ord:'created-desc'};stLim.q=ST_PAGE;draw()}
+function qRows(){const t0=nz(q.txt.trim());
+ const L=tasks.filter(t=>{
+  if(q.per==='_none'){if(t.owners.length)return false}else if(q.per&&!has(t,+q.per))return false;
+  if(q.est==='_open'){if(t.status==='finalizada')return false}else if(q.est&&t.status!==q.est)return false;
+  if(q.tip&&(t.tipo||'tarea')!==q.tip)return false;
+  if(q.pri==='1'&&!t.urgent)return false;if(q.pri==='0'&&t.urgent)return false;
+  if(q.late&&!(t.est&&t.status!=='finalizada'&&t.est<f(today)))return false;
+  if(q.d1||q.d2){const v=t[q.by];if(!v)return false;if(q.d1&&v<q.d1)return false;if(q.d2&&v>q.d2)return false}
+  if(t0&&!sKey(t).includes(t0)&&!nz(names(t)).includes(t0))return false;
+  return true});
+ const dc=new Map();if(/^days/.test(q.ord))L.forEach(t=>dc.set(t,days(t)));
+ const cmp={'created-desc':(a,b)=>(b.created||'').localeCompare(a.created||''),'created-asc':(a,b)=>(a.created||'~').localeCompare(b.created||'~'),'days-desc':(a,b)=>dc.get(b)-dc.get(a),'days-asc':(a,b)=>dc.get(a)-dc.get(b),'title':(a,b)=>a.title.localeCompare(b.title),'person':(a,b)=>names(a).localeCompare(names(b))}[q.ord]||(()=>0);
+ return L.sort(cmp)}
+function qHtml(){const L=qRows(),d=n=>n===1?'1 día':n+' días',wd=L.filter(t=>t.start&&t.tipo!=='reunion'),tot=wd.reduce((a,t)=>a+days(t),0);
+ const chip=t=>{const fin=t.status==='finalizada';return isT(t)?`<span class='chip s-${t.status}'>${ST[t.status]}</span>`:`<span class='chip s-${t.tipo==='reunion'&&t.reu==='ministerio'?'reunion-min':t.tipo}'>${t.tipo==='reunion'?(fin?'Reunión cerrada':'Reunión · '+(t.reu==='ministerio'?'Ministerio':'Interna')):t.tipo==='baja'?(fin?'Alta':'De baja'):t.tipo==='vacaciones'?(fin?'Vacaciones terminadas':'De vacaciones'):(fin?'Periodo cerrado':'Desasignado')}</span>`};
+ return `<div class='sub' style='margin:6px 2px 8px'><b>${L.length}</b> ${L.length===1?'resultado':'resultados'}${wd.length?` · ${d(tot)} acumulados · media ${d(Math.round(tot/wd.length))}`:''}</div>
+ <div class='tw'><table style='min-width:900px'><tr><th>Tarea</th><th>Personas</th><th>Estado</th><th>Creada</th><th>Inicio</th><th>Fin</th><th>Fin estimado</th><th>Días</th></tr>
+ ${L.slice(0,stLim.q).map(t=>{const n=t.notes[t.notes.length-1],late=t.est&&t.status!=='finalizada'&&t.est<f(today);return `<tr><td><span class='lnk' onclick='openTask(${t.id})'>${t.urgent?PI:''}${esc(t.title)}</span>${n?`<div class='sub'>${esc(n.t).slice(0,80)}</div>`:''}</td><td>${esc(names(t))||'<span class="sub">—</span>'}</td><td>${chip(t)}</td><td>${fmt(t.created)}</td><td>${fmt(t.start)}${t.tipo==='reunion'&&t.hora?' '+t.hora:''}</td><td>${fmt(t.end)}</td><td>${t.est?fmt(t.est)+(jtxt(t.start,t.est)?` <span class='sub'>· ${jtxt(t.start,t.est)}</span>`:'')+(late?` <span class='t-hi'>· retrasada</span>`:''):'—'}</td><td>${t.start&&t.tipo!=='reunion'?days(t):'—'}</td></tr>`}).join('')||`<tr><td colspan='8' class='sub'>Ninguna tarea cumple los filtros.</td></tr>`}</table></div>${L.length>stLim.q?`<div class='tip'>Mostrando ${stLim.q} de ${L.length}. <button class='btn ghost sm' onclick="stMore('q')">Mostrar ${ST_PAGE} más</button> o afina los filtros; el CSV exporta todo.</div>`:''}`}
+function cons(){const o=(v,l,c)=>`<option value="${v}"${String(c)===v?' selected':''}>${l}</option>`,sl=(k,a)=>`<select onchange="qSet('${k}',this.value)">${a.map(x=>o(x[0],x[1],q[k])).join('')}</select>`;
+ return `<div class="qf">
+ <div style="grid-column:1/-1"><label>Texto (título, descripción, seguimiento o persona)</label><input value="${esc(q.txt)}" placeholder="Buscar…" oninput="qTxt(this.value)"></div>
+ <div><label>Persona</label>${sl('per',[['','Todas'],['_none','Sin asignar'],...people.map(p=>[String(p.id),esc(p.name)])])}</div>
+ <div><label>Estado</label>${sl('est',[['','Todos'],['_open','Abiertas (no finalizadas)'],['proceso','En proceso'],['parada','Parada'],['pendiente','Pendiente'],['finalizada','Finalizada']])}</div>
+ <div><label>Tipo</label>${sl('tip',[['','Todos'],['tarea','Tarea'],['error','Error'],['libre','Sin tarea'],['baja','De baja'],['vacaciones','Vacaciones'],['reunion','Reunión']])}</div>
+ <div><label>Prioridad</label>${sl('pri',[['','Todas'],['1','Solo prioritarias'],['0','No prioritarias']])}</div>
+ <div><label>Filtrar fechas por</label>${sl('by',[['start','Inicio'],['end','Fin'],['created','Creación'],['est','Fin estimado']])}</div>
+ <div><label>Desde</label><input type="date" value="${q.d1}" onchange="qSet('d1',this.value)"></div>
+ <div><label>Hasta</label><input type="date" value="${q.d2}" onchange="qSet('d2',this.value)"></div>
+ <div><label>Ordenar por</label>${sl('ord',[['created-desc','Creación (recientes primero)'],['created-asc','Creación (antiguas primero)'],['days-desc','Más días'],['days-asc','Menos días'],['title','Título A–Z'],['person','Persona']])}</div>
+ <div style="display:flex;align-items:end"><label style="display:flex;gap:6px;align-items:center;margin:0 0 9px;color:var(--ink);font-size:14px"><input type="checkbox" style="width:auto" ${q.late?'checked':''} onchange="qSet('late',this.checked)"> Pasadas de fecha estimada</label></div>
+ <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" onclick="qClear()">Limpiar filtros</button><button class="btn sm" onclick="qCsv()">⬇ Exportar CSV</button></div></div>
+ <div id="q-res">${qHtml()}</div>`}
+function qCsvText(){const c=x=>{let v=String(x==null?'':x);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'},tl={tarea:'Tarea',error:'Error',libre:'Sin tarea',baja:'Baja',vacaciones:'Vacaciones',reunion:'Reunión'};
+ const head=['Título','Tipo','Personas','Estado','Prioritaria','Creada','Inicio','Fin','Fin estimado','Días','Jornadas estimadas','Hora','Reunión','Descripción','Seguimiento'];
+ return '\ufeff'+[head,...qRows().map(t=>[t.title,tl[t.tipo||'tarea'],names(t),ST[t.status],t.urgent?'Sí':'No',t.created||'',t.start||'',t.end||'',t.est||'',t.start&&t.tipo!=='reunion'?days(t):'',jor(t.start,t.est)||'',t.hora||'',t.reu?(t.reu==='ministerio'?'Con el Ministerio':'Interna'):'',t.desc||'',t.notes.map(n=>n.d+': '+n.t).join(' | ')])].map(r=>r.map(c).join(';')).join('\r\n')}
+function qCsv(){const b=new Blob([qCsvText()],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tareas-'+f(today)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function stats(){return `<div class='top'><div><h1>Estadísticas</h1><div class='sub'>${stTab==='cons'?'Consulta del histórico de tareas':'Tiempo de desarrollo, tiempo sin tarea y bajas por persona'}</div></div></div><div class="tabs"><button class="${stTab==='act'?'on':''}" onclick="stTab='act';stLim.all=stLim.bl=ST_PAGE;draw()">Actual</button><button class="${stTab==='cons'?'on':''}" onclick="stTab='cons';draw()">Consultas</button></div>`+(stTab==='cons'?cons():statsAct())}
+function draw(){document.body.classList.toggle('ro',ro());document.body.classList.toggle('ur',isUser());const rb=$('[data-v="reu"]');if(rb)rb.innerHTML=reuNav();const dn=$('[data-v="daily"]');if(dn)dn.style.display=isMain()?'':'none';if(view==='daily'&&!isMain())view='diario';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));$('#main').innerHTML={diario,daily,prio,backlog,reu,equipo,stats}[view]()+`<footer class="foot${canLog()?' lg':''}"${canLog()?' onclick="openLog()"':''}>Daily Tracker · v${VER} beta · ${BUILD}${ro()?' · 👁 modo invitado':''}${linked()&&!ro()&&me()?' · 👤 '+esc(me().name)+(me().admin?' (admin)':''):''}${canLog()?' · ver novedades':''}</footer>`}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on');view=b.dataset.v;draw();if(view==='equipo')loadPres()});
+
+function drop(e,pid){e.preventDefault();if(ro())return;const id=+e.dataTransfer.getData('t');if(isUser()){const t=tasks.find(x=>x.id===id);if(t&&t.tipo==='error'&&(!me()||me().id===pid))selfAssign(id);return}assign(id,pid)}
+function assign(id,pid){if(!pid)return;const t=tasks.find(x=>x.id===id);closeLibre(+pid,f(today));if(!has(t,+pid))t.owners.push(+pid);if(t.status==='pendiente'||!t.start){t.status='proceso';t.start=f(today)}t.notes.push({d:f(today),t:'Asignada a '+person(+pid).name});commit()}
+function pick(pid){const bl=tasks.filter(t=>!t.owners.length&&t.status==='pendiente');if(bl[0])assign(bl[0].id,pid)}
+function addP(){const n=$('#pn').value.trim();if(!n)return;people.push({id:nid(),name:n,role:$('#pr').value.trim()||'—',alta:f(today)});commit()}
+function prio(){
+ const L=tasks.filter(t=>isT(t)&&t.urgent&&t.status!=='finalizada').sort((a,b)=>(a.owners.length>0)-(b.owners.length>0)||a.created.localeCompare(b.created));
+ const since=t=>Math.max(1,Math.round((new Date(f(today))-new Date(t.created))/864e5)+1);
+ const d=n=>n===1?'1 día':n+' días';
+ const late=t=>t.est&&t.est<f(today)?Math.round((new Date(f(today))-new Date(t.est))/864e5):0;
+ const cel=n=>`<span class='t-${lv(n)}'><b>${d(n)}</b></span>`;
+ return `<div class='top'><div><h1>${PI}Tareas prioritarias</h1><div class='sub'>Marcadas como prioritarias, en el backlog o ya asignadas</div></div></div>
+ <div class='kpis'><div class='kpi'><b>${L.length}</b><span>Prioritarias abiertas</span></div><div class='kpi'><b>${L.filter(t=>!t.owners.length).length}</b><span>Sin asignar</span></div><div class='kpi'><b>${L.filter(t=>t.owners.length&&t.status==='proceso').length}</b><span>En proceso</span></div><div class='kpi'><b>${L.filter(t=>late(t)).length}</b><span>Pasadas de fecha estimada</span></div></div>
+ <div class='tw'><table><tr><th>Tarea</th><th>Estado</th><th>Asignada a</th><th>Desde creación</th><th>Asignada · en proceso</th><th>Fin estimado</th></tr>
+ ${L.map(t=>{const a=t.owners.length;return `<tr><td><span class='lnk' onclick='openTask(${t.id})'>${esc(t.title)}</span></td><td><span class='chip ${a?'s-'+t.status:'s-pendiente'}'>${a?ST[t.status]:'Sin asignar'}</span></td><td>${a?esc(names(t)):"<span class='sub'>— (en backlog)</span>"}</td><td>${cel(since(t))}<div class='sub'>desde ${fmt(t.created)}</div></td><td>${a&&t.start?cel(days(t))+`<div class='sub'>desde ${fmt(t.start)}</div>`:'—'}</td><td>${t.est?fmt(t.est)+(jtxt(t.start,t.est)?` <span class='sub'>· ${jtxt(t.start,t.est)}</span>`:'')+(late(t)?` <span class='t-hi'>· retrasada ${d(late(t))}</span>`:''):"<span class='sub'>sin fecha</span>"}</td></tr>`}).join('')||`<tr><td colspan='6' class='sub'>No hay tareas prioritarias abiertas.</td></tr>`}</table></div>`;
+}
+function editP(id){const p=person(id),d=$('#dlg');d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">Editar persona</h2><label>Nombre</label><input id="e-n" value="${esc(p.name)}"><label>Rol</label><input id="e-r" value="${esc(p.role)}"><div class="acts"><button class="btn ghost" onclick="$('#dlg').close()">Cancelar</button><button class="btn" onclick="saveP(${id})">Guardar</button></div>`;d.showModal()}
+function saveP(id){const p=person(id),n=$('#e-n').value.trim();if(!n)return;p.name=n;p.role=$('#e-r').value.trim()||'—';$('#dlg').close();commit()}
+function delP(id){if(mainAdm()===id){alert('Es el administrador principal. Transfiere antes el rol a otra persona.');return}const p=person(id),rel=tasks.filter(t=>has(t,id)),act=rel.filter(t=>isT(t)&&t.status!=='finalizada'),fin=rel.filter(t=>isT(t)&&t.status==='finalizada'),sp=rel.filter(t=>!isT(t)&&t.tipo!=='reunion');
+ if(rel.length){if(!confirm(`${p.name} tiene ${rel.length} tarea(s) relacionada(s):\n· ${act.length} tarea(s) activa(s): quedarán sin asignar (vuelven al backlog si nadie más las tiene)\n· ${fin.length} finalizada(s): se conservan en el histórico sin esta persona\n· ${sp.length} de sin tarea, baja o vacaciones: se borran\n\n¿Eliminar de todas formas?`))return}
+ else if(!confirm('¿Quitar a '+p.name+' del equipo?'))return;
+ people=people.filter(x=>x.id!==id);tasks=tasks.filter(t=>!(!isT(t)&&t.tipo!=='reunion'&&has(t,id)));
+ tasks.forEach(t=>{if(has(t,id)){t.owners=t.owners.filter(x=>x!==id);if(!t.owners.length&&t.status!=='finalizada'&&t.tipo!=='reunion'){t.status='pendiente';t.start='';t.end=''}}});tasks=tasks.filter(t=>!(t.tipo==='reunion'&&!t.owners.length));commit()}
+
+function openTask(id,owner,tipo0){if(pend)applyPending();if(id&&!tasks.find(x=>x.id===id)){alert('Esa tarea ya no existe.');return}if(isUser()&&!id&&!me()){openMe();return}
+ const t=id?tasks.find(x=>x.id===id):{title:'',desc:'',start:f(today),end:'',status:owner===null?'pendiente':'proceso',owners:isUser()?(me()?[me().id]:[]):owner?[owner]:[],created:f(today),est:'',urgent:false,tipo:tipo0||'tarea',hora:'09:00',reu:'interna',notes:[]};
+ const d=$('#dlg');
+ d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">${id?'Tarea':'Nueva tarea'}</h2>
+ <label>Tipo de tarea</label><select id="f-k" onchange="tipoChg()">${[['tarea','Tarea'],['error','Error'],['libre','Sin tarea (desasignado)'],['baja','De baja'],['vacaciones','Vacaciones'],['reunion','Reunión']].filter(x=>x[0]!=='reunion'||!isUser()).map(([k,v])=>`<option value="${k}" ${k===(t.tipo||'tarea')?'selected':''}>${v}</option>`).join('')}</select>
+ <label>Título</label><input id="f-t" value="${esc(t.title)}">
+ <div id="f-dw"><label>Descripción</label><textarea id="f-d" rows="8">${esc(t.desc)}</textarea></div>
+ <div class="two"><div style="grid-column:1/-1"><label>Personas asignadas (sin marcar = backlog)</label><div class="ms" id="f-o"><div class="ms-f" onclick="msTog()"><span id="ms-c" class="ms-cs"></span><span class="ms-ar">▾</span></div><div class="ms-p" id="ms-p" hidden><input id="ms-q" placeholder="Buscar persona…" oninput="msDraw()"><div id="ms-l"></div></div></div></div>
+ <div><label>Estado</label><select id="f-s">${Object.entries(ST).map(([k,v])=>`<option value="${k}" ${k===t.status?'selected':''}>${v}</option>`).join('')}</select></div>
+ <div><label id="f-il">Fecha inicio</label><input type="date" id="f-i" value="${t.start}" onchange="jorChg()"></div>
+ <div id="f-ew"><label>Fecha fin</label><input type="date" id="f-e" value="${t.end}"></div>
+ <div id="f-rw"><label>Hora</label><input type="time" id="f-h" value="${t.hora||'09:00'}"></div>
+ <div id="f-rt"><label>Reunión</label><select id="f-r"><option value="interna"${t.reu!=='ministerio'?' selected':''}>Interna</option><option value="ministerio"${t.reu==='ministerio'?' selected':''}>Con el Ministerio</option></select></div>
+ <div id="f-xw"><label>Fin estimado</label><input type="date" id="f-x" value="${t.est||''}" onchange="jorChg()"><div class="sub" id="f-j"></div></div>
+ <div id="f-cw"><label>Creada</label><input type="date" id="f-c" value="${t.created||f(today)}"></div></div>
+ <label id="f-uw" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-u" style="width:auto" ${t.urgent?'checked':''}> Prioritaria / urgente</label>
+ <label>Seguimiento diario</label>
+ <div class="tw" style="margin:0;max-height:230px;overflow:auto"><table style="min-width:0"><thead><tr><th>Fecha</th><th>Comentario</th><th></th></tr></thead><tbody id="nt"></tbody></table></div>
+ <button class="btn ghost sm" style="margin-top:8px" onclick="ntAdd()">+ Añadir línea</button>
+ <div class="acts">${id?`<button class="btn ghost" style="margin-right:auto" onclick="del(${id})">Eliminar</button>`:''}<button class="btn ghost" onclick="$('#dlg').close()">Cancelar</button><button class="btn" onclick="save(${id})">Guardar</button></div>`;
+ nd=t.notes.map(n=>({...n}));if(!rdo(t,id))nd.push({d:isUser()?f(today):sel,t:''});ntDraw();ms=t.owners.slice();msDraw();d.showModal();tipoChg(1);jorChg();if(rdo(t,id))roModal(d);else if(isUser())limModal(d,!id,!!id);
+}
+let nd=[];
+function ntDraw(){const ed=n=>!isUser()||n.d===f(today)||n.d===off(1),mm=isUser()?` min="${f(today)}" max="${off(1)}"`:'';
+ $('#nt').innerHTML=nd.map((n,i)=>{const x=ed(n)?'':' disabled';return `<tr><td style="width:140px;padding:4px"><input type="date" value="${esc(n.d)}"${mm}${x} onchange="nd[${i}].d=this.value"></td><td style="padding:4px"><input value="${esc(n.t)}" placeholder="Ej.: continúa por problema X"${x} oninput="nd[${i}].t=this.value"></td><td style="width:40px;padding:4px">${x?'':`<button class="btn ghost sm" title="Quitar línea" onclick="nd.splice(${i},1);ntDraw()">✕</button>`}</td></tr>`}).join('')}
+function limModal(d,isNew,own){const m=$('#f-o');if(m){m.style.pointerEvents='none';m.style.opacity='.75'}
+ if(isNew)['f-i','f-c','f-s','f-e'].forEach(i=>{const e=$('#'+i);if(e)e.disabled=true});
+ else{d.querySelectorAll('input,select,textarea').forEach(e=>{if(!e.closest('#nt'))e.disabled=true});
+  d.querySelectorAll('.acts .btn').forEach(b=>{if(/del\(/.test(b.getAttribute('onclick')||''))b.style.display='none'});
+  if(own){const e=$('#f-s');e.disabled=false;[...e.options].forEach(o=>{if(o.value==='pendiente'&&e.value!=='pendiente')o.remove()})}
+  const h=d.querySelector('h2');if(h)h.textContent+=own?' · estado y seguimiento de hoy y mañana':' · solo seguimiento de hoy y mañana'}}
+const b64=u=>btoa(String.fromCharCode(...u)),unb=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function hp(pw,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);return b64(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations:100000},k,256)))}
+let admP=null;
+function openMe(){const d=$('#dlg');d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">¿Quién eres?</h2><div class="tip">Elige tu usuario. Te pedirá tu contraseña; la primera vez la creas tú.</div><label>Usuario</label><select id="m-p">${people.map(p=>`<option value="${p.id}" ${p.id===cfg.me?'selected':''}>${esc(p.name)}${p.admin?' · administrador':''}</option>`).join('')}</select><div class="acts">${mainAdm()===null?`<button class="btn ghost" style="margin-right:auto" onclick="meOk(true)">Administrador…</button>`:''}<button class="btn" onclick="meOk()">Entrar</button></div>`;d.showModal()}
+let pwT=null,pwAdm=false;
+function meOk(adm){const id=+$('#m-p').value,p=person(id);$('#dlg').close();
+ if(cfg.me===id){if(adm&&!p.admin){admP=id;openAdmin()}else draw();return}
+ pwT=id;pwAdm=!!adm;openLogin()}
+function openLogin(){const p=person(pwT),d=$('#dlg'),nuevo=!p.pw;
+ d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">${nuevo?'Crea tu contraseña':'Contraseña de '+esc(p.name)}</h2><div class="tip">${nuevo?'Es la primera vez que se elige a '+esc(p.name)+'. Elige una contraseña (mínimo 4 caracteres) para que nadie más se haga pasar por ti. Si la olvidas, un administrador puede restablecerla.':'Introduce tu contraseña. Si la has olvidado, pide a un administrador que la restablezca.'}</div><label>Contraseña</label><input id="l-p" type="password">${nuevo?'<label>Repite la contraseña</label><input id="l-p2" type="password">':''}${nuevo&&p.admin&&auth?'<label>Contraseña de administrador (por ser administrador)</label><input id="l-a" type="password">':''}<div class="acts"><button class="btn ghost" onclick="$(\'#dlg\').close()">Cancelar</button><button class="btn" onclick="loginOk()">Aceptar</button></div>`;d.showModal()}
+async function loginOk(){const p=person(pwT),pw=$('#l-p').value;
+ if(pw.length<4){alert('La contraseña debe tener al menos 4 caracteres.');return}
+ if(!window.crypto||!crypto.subtle){alert('Este navegador solo comprueba contraseñas en una página segura (HTTPS).');return}
+ if(p.pw){if(await hp(pw,unb(p.pw.s))!==p.pw.h){alert('Contraseña incorrecta.');return}}
+ else{if(pw!==$('#l-p2').value){alert('Las contraseñas no coinciden.');return}
+  if(p.admin&&auth&&await hp($('#l-a').value,unb(auth.s))!==auth.h){alert('Contraseña de administrador incorrecta.');return}
+  const sl=crypto.getRandomValues(new Uint8Array(16));p.pw={s:b64(sl),h:await hp(pw,sl)}}
+ $('#dlg').close();cfg.me=p.id;localStorage.setItem('dt_cfg',JSON.stringify(cfg));
+ if(pwAdm&&!p.admin){admP=p.id;commit();openAdmin()}else commit();setTimeout(beat,800)}
+function resetPw(id){const p=person(id);if(!confirm('¿Restablecer la contraseña de '+p.name+'? La próxima vez que se elija ese usuario tendrá que crear una nueva.'))return;delete p.pw;commit()}
+function setMe(id){cfg.me=id;localStorage.setItem('dt_cfg',JSON.stringify(cfg));draw()}
+function openAdmin(){const p=person(admP||(me()||{}).id);if(!p){alert('Elige primero quién eres.');return}if(mainAdm()!==null&&!p.admin){alert('Solo el administrador principal puede crear administradores.');return}admP=p.id;const d=$('#dlg');
+ d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">Administrador</h2><div class="tip">${auth?'Introduce la contraseña de administrador para '+esc(p.name)+'.':'Aún no hay contraseña de administrador. Crea una: hará falta para ser administrador.'}</div><label>Contraseña</label><input id="a-p" type="password">${auth?'':'<label>Repite la contraseña</label><input id="a-p2" type="password">'}<div class="acts"><button class="btn ghost" onclick="$(\'#dlg\').close()">Cancelar</button><button class="btn" onclick="admOk()">Aceptar</button></div>`;d.showModal()}
+async function admOk(){const pw=$('#a-p').value;if(!pw)return;if(mainAdm()!==null&&!person(admP).admin){alert('Solo el administrador principal puede crear administradores.');return}
+ if(!window.crypto||!crypto.subtle){alert('Este navegador solo comprueba contraseñas en una página segura (HTTPS).');return}
+ if(!auth){if(pw!==$('#a-p2').value){alert('Las contraseñas no coinciden.');return}const s=crypto.getRandomValues(new Uint8Array(16));auth={s:b64(s),h:await hp(pw,s),by:admP}}
+ else if(await hp(pw,unb(auth.s))!==auth.h){alert('Contraseña incorrecta.');return}
+ cfg.me=admP;localStorage.setItem('dt_cfg',JSON.stringify(cfg));person(admP).admin=true;$('#dlg').close();commit();setTimeout(beat,800)}
+function openPw(){const d=$('#dlg');d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">Contraseña de administrador</h2><label>Nueva contraseña</label><input id="a-p" type="password"><label>Repite la contraseña</label><input id="a-p2" type="password"><div class="acts"><button class="btn ghost" onclick="$('#dlg').close()">Cancelar</button><button class="btn" onclick="pwOk()">Guardar</button></div>`;d.showModal()}
+async function pwOk(){const pw=$('#a-p').value;if(!pw||pw!==$('#a-p2').value){alert('Las contraseñas no coinciden.');return}
+ if(!window.crypto||!crypto.subtle){alert('Este navegador solo comprueba contraseñas en una página segura (HTTPS).');return}
+ const s=crypto.getRandomValues(new Uint8Array(16));auth={s:b64(s),h:await hp(pw,s),by:auth&&auth.by};$('#dlg').close();commit()}
+function setAdm(id){const p=person(id);if(!isMain()){alert('Solo el administrador principal puede dar o quitar el rol de administrador.');return}if(!p.admin&&!p.pw){alert(p.name+' aún no tiene contraseña personal. Debe iniciar sesión una vez antes de poder ser administrador.');return}if(p.admin&&mainAdm()===id){alert('Es el administrador principal. Transfiere antes el rol a otra persona.');return}if(p.admin&&people.filter(x=>x.admin).length===1&&!confirm('Es el único administrador. ¿Quitarle el rol igualmente?'))return;p.admin=!p.admin;commit()}
+function roModal(d){d.querySelectorAll('input,select,textarea').forEach(e=>e.disabled=true);const m=$('#f-o');if(m){m.style.pointerEvents='none';m.style.opacity='.75'}
+ d.querySelectorAll('.acts .btn,button[onclick="ntAdd()"],#nt button').forEach(b=>{const o=b.getAttribute('onclick')||'';if(/save\(|del\(|ntAdd|nd\.splice/.test(o))b.style.display='none';else if(b.textContent==='Cancelar')b.textContent='Cerrar'});
+ const h=d.querySelector('h2');if(h)h.textContent+=' (solo lectura)'}
+let ms=[];
+function msTog(){const p=$('#ms-p');p.hidden=!p.hidden;if(!p.hidden){$('#ms-q').value='';msDraw();$('#ms-q').focus()}}
+function msPick(id){ms=ms.includes(id)?ms.filter(x=>x!==id):[...ms,id];msDraw()}
+function msDraw(){const q=($('#ms-q').value||'').toLowerCase();
+ $('#ms-c').innerHTML=ms.length?ms.map(id=>`<span class="ms-chip">${esc((person(id)||{}).name||'?')}<b onclick="event.stopPropagation();msPick(${id})">✕</b></span>`).join(''):'<span class="ms-ph">Sin asignar (backlog)</span>';
+ $('#ms-l').innerHTML=people.filter(p=>p.name.toLowerCase().includes(q)).map(p=>`<div class="ms-o${ms.includes(p.id)?' on':''}" onclick="msPick(${p.id})">${esc(p.name)} <span class="sub">· ${esc(p.role)}</span>${ms.includes(p.id)?'<span style="float:right">✓</span>':''}</div>`).join('')||'<div class="ms-o sub">Sin resultados</div>'}
+document.addEventListener('click',e=>{const p=$('#ms-p');if(p&&!e.composedPath().some(n=>n.id==='f-o'))p.hidden=true});
+function jorChg(){const n=jor($('#f-i').value,$('#f-x').value);$('#f-j').textContent=n?'Tiempo estimado: '+n+(n===1?' jornada':' jornadas'):''}
+function ntAdd(){nd.push({d:isUser()?f(today):sel,t:''});ntDraw();const x=document.querySelectorAll('#nt input[placeholder]');x[x.length-1].focus()}
+function save(id){if(isUser()&&id){const t=tasks.find(x=>x.id===id),ok=n=>n.d===f(today)||n.d===off(1);
+  if(!(me()&&has(t,me().id))){$('#dlg').close();return}
+  {const st=$('#f-s').value;if(st!==t.status&&ST[st]&&st!=='pendiente'){t.status=st;if(st==='finalizada'){if(!t.end)t.end=f(today)}else t.end=''}}t.notes=t.notes.filter(n=>!ok(n)).concat(nd.filter(n=>n.t.trim()&&ok(n)).map(n=>({d:n.d,t:n.t.trim()}))).sort((a,b)=>a.d.localeCompare(b.d));$('#dlg').close();commit();return}
+ const title=$('#f-t').value.trim();if(!title)return;
+ const os=ms.slice(),k=$('#f-k').value;if(k==='reunion'){if(!os.length||!$('#f-i').value||!$('#f-h').value){alert('Una reunión necesita al menos un asistente, fecha y hora.');return}}else if(k!=='tarea'&&k!=='error'&&os.length!==1){alert('Esta tarea debe tener exactamente una persona.');return}let st=$('#f-s').value,end=$('#f-e').value;
+ if(st==='finalizada'&&!end)end=f(today);
+ const base={title,desc:$('#f-d').value,owners:os,status:os.length?st:'pendiente',start:$('#f-i').value,end,urgent:(k==='tarea'||k==='error')&&$('#f-u').checked,tipo:k,hora:k==='reunion'?$('#f-h').value:'',reu:k==='reunion'?$('#f-r').value:'',est:(k==='tarea'||k==='error')?$('#f-x').value:'',created:$('#f-c').value||f(today)};
+ if(isUser()){base.owners=[me().id];base.start=f(today);base.created=f(today);base.status='proceso';base.end=''}
+ let t,prev=[];if(id){t=tasks.find(x=>x.id===id);prev=t.owners.slice();Object.assign(t,base)}else{t={id:nid(),notes:[],...base};tasks.push(t)}
+ if(k==='tarea'||k==='error')t.owners.filter(o=>!prev.includes(o)).forEach(o=>closeLibre(o,t.start||f(today)));
+ t.notes=nd.filter(n=>n.t.trim()).map(n=>({d:n.d||sel,t:n.t.trim()})).sort((a,b)=>a.d.localeCompare(b.d));
+ $('#dlg').close();commit();
+}
+function closeLibre(pid,date){tasks.filter(t=>t.tipo==='libre'&&has(t,pid)&&t.status!=='finalizada').forEach(t=>{t.status='finalizada';t.end=date;t.notes.push({d:date,t:'Se le asigna tarea'})})}
+function libre(pid){if(tasks.some(t=>t.tipo==='libre'&&has(t,pid)&&t.status!=='finalizada'))return;tasks.push({id:nid(),title:'Sin tarea asignada',desc:'',start:sel,end:'',status:'proceso',owners:[pid],created:sel,est:'',urgent:false,tipo:'libre',notes:[]});commit()}
+function del(id){if(!confirm('¿Eliminar la tarea?'))return;tasks=tasks.filter(t=>t.id!==id);$('#dlg').close();commit()}
+function loadDemo(){const o=JSON.parse(DEMO);people=o.people;tasks=o.tasks;norm();commit()}
+
+/* Persistencia: caché local + data.json en GitHub (API Contents) */
+let cfg={};try{cfg=JSON.parse(localStorage.getItem('dt_cfg')||'{}')}catch(e){}
+const ro=()=>cfg.role==='guest';
+let auth=null,pend=null,dis=null,appRepo='';
+const repo=()=>cfg.repo||appRepo;
+const me=()=>people.find(p=>p.id===cfg.me);
+const isAdmin=()=>!linked()||people.length===0||!!(me()&&me().admin);
+const isUser=()=>!!linked()&&!ro()&&!isAdmin();
+const canLog=()=>!ro()&&isAdmin();
+const mainAdm=()=>auth&&auth.by!=null?auth.by:null;
+const isMain=()=>!linked()||(!ro()&&!!me()&&!!me().admin&&(mainAdm()===null||me().id===mainAdm()));
+const rdo=(t,id)=>ro()||(isUser()&&!!id&&(t.tipo==='reunion'||!(me()&&has(t,me().id))));
+const canAdd=pid=>!ro()&&(isAdmin()||(isUser()&&!!me()&&me().id===pid));
+let sha=null,dirty=false,pushing=false,queued=false,timer=null;
+const hora=()=>new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const apiUrl=()=>`https://api.github.com/repos/${repo()}/contents/${cfg.path||'data.json'}`;
+const H=()=>({Authorization:'Bearer '+cfg.token,Accept:'application/vnd.github+json'});
+const linked=()=>repo()&&cfg.token;
+function setSt(c,m){const e=$('#sync');if(e){e.className='sync '+c;e.textContent=(ro()?'👁 Invitado · ':'')+m}}
+/* ---- Compresión (gzip): el data.json real baja de ~4,8 MB a ~0,2 MB. Poner ZIP=false para guardar JSON legible ---- */
+const ZIP=true,CAN_GZ=typeof CompressionStream!=='undefined'&&typeof DecompressionStream!=='undefined';
+const bin2b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+const b642bin=t=>Uint8Array.from(atob(t.replace(/\n/g,'')),c=>c.charCodeAt(0));
+const pipe=async(data,T)=>new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(T)).arrayBuffer());
+const gzip=s=>pipe(s,new CompressionStream('gzip'));
+async function bin2text(u){
+ if(u.length>2&&u[0]===0x1f&&u[1]===0x8b){
+  if(!CAN_GZ)throw new Error('este navegador no puede leer datos comprimidos: actualízalo');
+  return new TextDecoder().decode(await pipe(u,new DecompressionStream('gzip')))}
+ return new TextDecoder().decode(u)}
+const snap=pretty=>JSON.stringify({version:1,updated:new Date().toISOString(),people,tasks,auth},null,pretty?1:0);
+async function snapBytes(){
+ if(ZIP&&CAN_GZ){try{return await gzip(snap(false))}catch(e){}}
+ return new TextEncoder().encode(snap(true))}
+/* ---- Caché local en IndexedDB (localStorage se queda en ~5 MB y con muchos errores ya no cabía) ---- */
+let idbP=null;
+const idb=()=>idbP||(idbP=new Promise((ok,ko)=>{try{const r=indexedDB.open('dt',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}}));
+const idbGet=async k=>{const d=await idb();return new Promise((ok,ko)=>{const r=d.transaction('k').objectStore('k').get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)})};
+const idbSet=async(k,v)=>{const d=await idb();return new Promise((ok,ko)=>{const t=d.transaction('k','readwrite');t.objectStore('k').put(v,k);t.oncomplete=()=>ok();t.onerror=()=>ko(t.error)})};
+let cacheT=null;
+function cache(){clearTimeout(cacheT);cacheT=setTimeout(async()=>{
+ try{await idbSet('cache',{people,tasks,auth});try{localStorage.removeItem('dt_cache')}catch(e){}}
+ catch(e){try{localStorage.setItem('dt_cache',JSON.stringify({people,tasks,auth}))}catch(x){}}},250)}
+function bootMsg(m){const p=$('#boot p');if(p)p.textContent=m}
+function bootHide(){window.__up=1;const b=$('#boot');if(b){b.classList.add('off');setTimeout(()=>{const x=$('#boot');if(x)x.remove()},400)}}
+function commit(){if(ro()){pull();return}autoClose();cache();draw();if(!linked())return;dirty=true;clearTimeout(timer);timer=setTimeout(push,800)}
+let etag=null;
+async function readFile(url){
+ const q=url+'?t='+Date.now()+(cfg.branch?'&ref='+cfg.branch:'');
+ const r=await fetch(q,{headers:H(),cache:'no-store'});
+ if(r.status===404)return{sha:null,text:null};
+ if(!r.ok)throw new Error('GitHub respondió '+r.status);
+ let j;try{j=await r.json()}catch(e){throw new Error('GitHub devolvió una respuesta vacía')}
+ etag=(r.headers&&r.headers.get&&r.headers.get('ETag'))||null;
+ let u=j.content?b642bin(j.content):new Uint8Array(0);
+ if(!u.length&&j.size>0){const r2=await fetch(q,{headers:{...H(),Accept:'application/vnd.github.raw+json'},cache:'no-store'});if(!r2.ok)throw new Error('GitHub respondió '+r2.status);u=new Uint8Array(await r2.arrayBuffer())}
+ return{sha:j.sha,text:await bin2text(u)}}
+async function pull(){
+ if(!linked())return setSt('','Local · sin GitHub');
+ setSt('busy','Sincronizando…');
+ let x;try{x=await readFile(apiUrl())}catch(e){setSt('err','Error al leer ('+e.message+')');return}
+ if(x.text===null){sha=null;dirty=true;return push()}
+ sha=x.sha;
+ if(!x.text.trim()){if(ro()){setSt('err','El fichero de datos está vacío');return}dirty=true;return push()}
+ let o;try{o=JSON.parse(x.text)}catch(e){setSt('err','El fichero de datos no es un JSON válido ('+e.message+'). No se ha modificado: revísalo en GitHub.');return}
+ if(!o||typeof o!=='object'||Array.isArray(o)){setSt('err','El fichero de datos no tiene el formato esperado. No se ha modificado.');return}
+ people=o.people||[];tasks=o.tasks||[];auth=o.auth||null;norm();cache();pend=null;dis=null;showUpd(false);setSt('ok','☁ Sincronizado '+hora());
+ try{if(!$('#dlg').open){draw();if(!ro()&&people.length&&!me())openMe()}}catch(e){setSt('err','Error al mostrar los datos ('+e.message+')')}}
+/* Sondeo ligero: solo descarga el fichero entero (unos MB) cuando cambia el sha */
+async function check(){
+ if(!linked()||dirty||pushing)return;
+ try{const r=await fetch(apiUrl()+'?t='+Date.now()+(cfg.branch?'&ref='+cfg.branch:''),{headers:etag?{...H(),'If-None-Match':etag}:H(),cache:'no-store'});
+  if(r.status===304){pend=null;showUpd(false);return}
+  if(!r.ok)return;const m=await r.json();
+  if(m.sha===sha){const e=r.headers.get('ETag');if(e)etag=e;pend=null;showUpd(false);return}
+  if(m.sha===dis)return;
+  const x=await readFile(apiUrl());
+  if(x.text===null||!x.text.trim())return;
+  let o;try{o=JSON.parse(x.text)}catch(e){return}
+  if(!o||typeof o!=='object'||Array.isArray(o))return;
+  pend={sha:x.sha,o};showUpd(true)}catch(e){}}
+function showUpd(v){const e=$('#upd');if(e)e.hidden=!v}
+function applyPending(){if(!pend)return;const o=pend.o;
+ sha=pend.sha;people=o.people||[];tasks=o.tasks||[];auth=o.auth||null;norm();cache();pend=null;dis=null;showUpd(false);setSt('ok','☁ Actualizado '+hora());draw()}
+function dismissUpd(){if(pend)dis=pend.sha;pend=null;showUpd(false)}
+async function push(){
+ if(!linked()||ro())return;if(pushing){queued=true;return}
+ pushing=true;setSt('busy','Guardando…');
+ try{const b={message:'Daily Tracker '+new Date().toISOString(),content:bin2b64(await snapBytes())};
+  if(sha)b.sha=sha;if(cfg.branch)b.branch=cfg.branch;
+  const r=await fetch(apiUrl(),{method:'PUT',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(b)});
+  if(r.status===409||r.status===422){dirty=false;pushing=false;setSt('err','Conflicto con otro dispositivo: recargando, repite el cambio');return pull()}
+  if(!r.ok)throw new Error(r.status);
+  sha=(await r.json()).content.sha;etag=null;dirty=false;setSt('ok','☁ Guardado '+hora())}
+ catch(e){setSt('err',e.message==='403'?'Sin permiso de escritura: token de solo lectura o límite de GitHub':'No se pudo guardar ('+e.message+')')}
+ pushing=false;if(queued){queued=false;push()}}
+function openCfg(){const d=$('#dlg');d.innerHTML=`<h2 style="margin:0;color:var(--steel-d);font-size:18px">Sincronizar con GitHub</h2>
+<div class="tip">Los datos se guardan en un repositorio privado. El token solo se guarda en este navegador.</div>
+${!repo()||(linked()&&me()&&me().admin)?`<label>Repositorio de datos (usuario/repo)</label><input id="c-r" value="${esc(cfg.repo||'')}" placeholder="${esc(appRepo||'usuario/repositorio')}">`:''}
+<label>Token fine-grained (permiso Contents: lectura y escritura)</label><input id="c-t" type="password" value="${esc(cfg.token||'')}">
+${linked()&&me()&&me().admin?`<label>Rol</label><select id="c-ro"><option value="admin" ${cfg.role!=='guest'?'selected':''}>Administrador (token de lectura y escritura)</option><option value="guest" ${cfg.role==='guest'?'selected':''}>Invitado (token de solo lectura)</option></select>`:''}
+${linked()&&me()&&me().admin?`<div class="two"><div><label>Fichero</label><input id="c-p" value="${esc(cfg.path||'data.json')}"></div><div><label>Rama (opcional)</label><input id="c-b" value="${esc(cfg.branch||'')}"></div></div>`:''}
+<div class="acts"><button class="btn ghost" style="margin-right:auto" onclick="saveCfg(1)">Desconectar</button><button class="btn ghost" onclick="$('#dlg').close()">Cancelar</button><button class="btn" onclick="saveCfg()">Guardar y sincronizar</button></div>`;d.showModal()}
+function saveCfg(x){cfg=x?{}:{repo:$('#c-r')?$('#c-r').value.trim():cfg.repo,token:$('#c-t').value.trim(),path:($('#c-p')?$('#c-p').value.trim():cfg.path)||'data.json',branch:$('#c-b')?$('#c-b').value.trim():(cfg.branch||''),role:$('#c-ro')?$('#c-ro').value:cfg.role,me:cfg.me};localStorage.setItem('dt_cfg',JSON.stringify(cfg));sha=null;$('#dlg').close();draw();pull()}
+
+async function loadAppCfg(){try{const r=await fetch('config.json',{cache:'no-cache'});if(r.ok){const c=await r.json();appRepo=(c.repo||'').trim()}}catch(e){}}
+
+setInterval(()=>{if(!dirty&&!pushing&&!$('#dlg').open)check()},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!dirty&&!$('#dlg').open)check()});
+addEventListener('online',()=>dirty?push():check());
+let pres={};
+const online=p=>!!(pres[p.id]&&Date.now()-pres[p.id]<7*60000);
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<60?'hace '+Math.max(m,1)+' min':m<1440?'hace '+Math.round(m/60)+' h':'hace '+Math.round(m/1440)+' d'};
+const presUrl=()=>`https://api.github.com/repos/${repo()}/contents/presence.json`;
+async function presGet(){const x=await readFile(presUrl());let d={};if(x.text&&x.text.trim()){try{d=JSON.parse(x.text)}catch(e){d={}}}return{sha:x.sha,d}}
+async function loadPres(){if(!linked())return;try{pres=(await presGet()).d;if(view==='equipo'&&!$('#dlg').open)draw()}catch(e){}}
+async function beat(){if(!linked()||ro()||!me()||document.hidden||navigator.onLine===false)return;
+ for(let k=0;k<3;k++){try{const x=await presGet(),now=Date.now();Object.keys(x.d).forEach(i=>{if(now-x.d[i]>2*864e5)delete x.d[i]});x.d[me().id]=now;
+  const b={message:'presencia',content:btoa(unescape(encodeURIComponent(JSON.stringify(x.d))))};if(x.sha)b.sha=x.sha;if(cfg.branch)b.branch=cfg.branch;
+  const r=await fetch(presUrl(),{method:'PUT',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(b)});
+  if(r.ok){pres=x.d;if(view==='equipo'&&!$('#dlg').open)draw();return}
+  if(r.status!==409&&r.status!==422)return}catch(e){return}}}
+setInterval(beat,180000);setTimeout(beat,6000);
+setInterval(()=>{if(view==='equipo')loadPres()},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){beat();if(view==='equipo')loadPres()}});
+
+let dl={run:false,order:[],i:0,show:localStorage.getItem('dt_dshow')!=='0'};
+const away=p=>tasks.find(t=>(t.tipo==='baja'||t.tipo==='vacaciones')&&has(t,p.id)&&t.status!=='finalizada'&&(!t.start||t.start<=f(today)));
+function dStart(){if(!isMain())return;const ps=people.filter(p=>!p.noDaily&&!away(p));if(!ps.length)return;for(let i=ps.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ps[i],ps[j]]=[ps[j],ps[i]]}dl.run=true;dl.order=ps.map(p=>p.id);dl.i=0;draw()}
+function dNext(){if(dl.i<dl.order.length)dl.i++;draw()}
+function dPrev(){if(dl.i>0)dl.i--;draw()}
+function dStop(){dl.run=false;draw()}
+function dShow(v){dl.show=v;localStorage.setItem('dt_dshow',v?'1':'0');draw()}
+function togDaily(id){if(ro()||!isMain())return;const p=person(id);p.noDaily=!p.noDaily;commit()}
+function daily(){
+ dl.order=dl.order.filter(person);
+ if(dl.run){const N=dl.order.length;
+  if(dl.i>=N)return `<div class="dl"><div class="dl-name">🎉 ¡Daily terminada!</div><div class="dl-n">Han intervenido ${N} ${N===1?'persona':'personas'}</div><button class="btn big" onclick="dStart()">Volver a sortear</button> <button class="btn ghost big" onclick="dStop()">Salir</button></div>`;
+  const p=person(dl.order[dl.i]),ts=tasks.filter(t=>has(t,p.id)&&t.status!=='finalizada');
+  return `<div class="dl"><div class="dl-name">${esc(p.name)}</div><div class="dl-n">${dl.i+1} de ${N}</div>
+ <button class="btn big" onclick="dNext()">Siguiente ▸</button>
+ <div style="margin-top:12px"><button class="btn ghost sm" onclick="dPrev()"${dl.i?'':' disabled'}>◂ Anterior</button> <button class="btn ghost sm" onclick="dStop()">Salir</button></div>
+ ${dl.show?`<div class="dl-t">${ts.length?taskList(ts,p.id):'<div class="free"><span>Sin tarea asignada</span></div>'}</div>`:''}
+ <label class="sub" style="display:block;margin-top:14px"><input type="checkbox" style="width:auto" ${dl.show?'checked':''} onchange="dShow(this.checked)"> Mostrar sus tareas</label></div>`}
+ const canEdit=isMain()&&!ro(),n=people.filter(p=>!p.noDaily&&!away(p)).length;
+ return `<div class="top"><div><h1>🎲 Daily</h1><div class="sub">Orden aleatorio de intervención · ${n} de ${people.length} participan</div></div></div>
+ <div class="dl-set">${people.map(p=>{const a=away(p);return `<label class="row" style="cursor:${canEdit&&!a?'pointer':'default'}"><input type="checkbox" style="width:auto" ${a||p.noDaily?'':'checked'} ${canEdit&&!a?'':'disabled'} onchange="togDaily(${p.id})"><div class="grow"><b>${esc(p.name)}</b><div class="sub">${esc(p.role)}</div></div>${a?`<span class="chip s-${a.tipo}">${a.tipo==='baja'?'De baja · excluido':'De vacaciones · excluido'}</span>`:p.noDaily?'<span class="chip s-parada">Excluido</span>':''}</label>`}).join('')||'<div class="tip">Añade personas en Equipo.</div>'}</div>
+ <div style="margin:16px 0"><button class="btn big" onclick="dStart()"${n?'':' disabled'}>🎲 Empezar sorteo (${n})</button></div>
+ ${canEdit?'':'<div class="tip">Solo un administrador cambia quién participa.</div>'}
+ <label class="sub"><input type="checkbox" style="width:auto" ${dl.show?'checked':''} onchange="dShow(this.checked)"> Mostrar las tareas de cada persona mientras habla</label>`;
+}
+document.addEventListener('keydown',e=>{if(view!=='daily'||!dl.run||$('#dlg').open||/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target||{}).tagName||''))return;
+ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();dNext()}else if(e.key==='ArrowLeft')dPrev();else if(e.key==='Escape')dStop()});
+function setMain(id){const p=person(id);if(!isMain()||!auth)return;if(!confirm('¿Hacer a '+p.name+' administrador principal? Solo el principal ve el menú Daily y puede transferir este rol.'))return;auth.by=id;commit()}
+const reuC=t=>t.reu==='ministerio'?'#a8328f':'#2b6cb0';
+const calSvg=(c,d)=>`<svg class="cal" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="17.5" rx="3" fill="#fff" stroke="${c}" stroke-width="1.6"/><path d="M2.5 9.4h19V7a3 3 0 0 0-3-3h-13a3 3 0 0 0-3 3z" fill="${c}"/><rect x="7" y="2" width="2" height="4" rx="1" fill="${c}"/><rect x="15" y="2" width="2" height="4" rx="1" fill="${c}"/><text x="12" y="19" text-anchor="middle" font-size="9" font-weight="700" fill="${c}" font-family="system-ui,sans-serif">${d||''}</text></svg>`;
+function autoClose(){let n=0;const now=Date.now();tasks.forEach(t=>{if(t.tipo==='reunion'&&t.status!=='finalizada'&&t.start){const ms=new Date(t.start+'T'+(t.hora||'00:00')+':00').getTime()+12*3600e3;if(now>=ms){t.status='finalizada';t.end=f(new Date(ms));n++}}});return n}
+setInterval(()=>{if(autoClose())draw()},30000);
+function reuNav(){const h=tasks.filter(t=>t.tipo==='reunion'&&t.start===f(today)&&t.status!=='finalizada'),c=!h.length?'#9aa8b8':h.some(t=>t.reu==='ministerio')?'#a8328f':'#2b6cb0';
+ return calSvg(c,today.getDate())+' Reuniones'+(h.length?`<span class="rbadge" style="background:${c}">${h.length}</span>`:'')}
+function reuCard(t,pid){const c=reuC(t),fin=t.status==='finalizada',min=t.reu==='ministerio',hoy=t.start===f(today);
+ return `<div class="task reunion${min?' min':''}" onclick="openTask(${t.id})"><div class="tt"><b>${calSvg(c,t.start?+t.start.slice(8):'')} ${esc(t.title)}</b><span class="chip ${min?'s-reunion-min':'s-reunion'}">${fin?'Cerrada':(hoy?'Hoy':fmt(t.start))+' '+esc(t.hora||'')}</span></div>
+ <div class="meta"><span>${min?'Con el Ministerio':'Interna'}</span><span>🕒 ${esc(t.hora||'')}</span></div>
+ ${t.owners.length>1?`<div class="sub" style="margin-top:4px">👥 Con ${esc(t.owners.filter(o=>o!==pid).map(o=>(person(o)||{}).name||'?').join(', '))}</div>`:''}</div>`}
+function reu(){const td=f(today),R=tasks.filter(t=>t.tipo==='reunion').sort((a,b)=>(a.start+(a.hora||'')).localeCompare(b.start+(b.hora||'')));
+ const row=t=>{const min=t.reu==='ministerio',fin=t.status==='finalizada';return `<tr><td>${calSvg(reuC(t),t.start?+t.start.slice(8):'')}</td><td><b>${esc(t.hora||'')}</b><div class='sub'>${fmt(t.start)}</div></td><td><span class='lnk' onclick='openTask(${t.id})'>${esc(t.title)}</span>${t.desc?`<div class='sub'>${esc(t.desc).slice(0,90)}</div>`:''}</td><td><span class='chip ${min?'s-reunion-min':'s-reunion'}'>${min?'Con el Ministerio':'Interna'}</span></td><td>${esc(names(t))}</td><td>${fin?"<span class='chip s-finalizada'>Cerrada</span>":"<span class='sub'>Abierta</span>"}</td></tr>`};
+ const tbl=(L,e)=>`<div class='tw'><table style='min-width:760px'><tr><th></th><th>Hora</th><th>Reunión</th><th>Tipo</th><th>Asistentes</th><th></th></tr>${L.map(row).join('')||`<tr><td colspan='6' class='sub'>${e}</td></tr>`}</table></div>`;
+ const hoy=R.filter(t=>t.start===td);
+ return `<div class='top'><div><h1>Reuniones</h1><div class='sub'>${hoy.filter(t=>t.status!=='finalizada').length} abiertas hoy · se cierran solas 12 horas después de su hora</div></div>${isAdmin()&&!ro()?`<button class="btn" onclick="openTask(0,undefined,'reunion')">+ Nueva reunión</button>`:''}</div>
+ <h3 style='color:var(--steel-d)'>Hoy</h3>${tbl(hoy,'No hay reuniones hoy.')}
+ <h3 style='color:var(--steel-d)'>Próximas</h3>${tbl(R.filter(t=>t.start>td),'No hay reuniones programadas.')}
+ <h3 style='color:var(--steel-d)'>Anteriores (últimas 20)</h3>${tbl(R.filter(t=>t.start<td).reverse().slice(0,20),'Todavía no hay reuniones anteriores.')}`}
+function dayCheck(){const n=new Date();n.setHours(0,0,0,0);if(n.getTime()===today.getTime())return;const old=f(today);today=n;if(sel===old){sel=f(today);wk=0}draw()}
+setInterval(dayCheck,30000);
+addEventListener('focus',dayCheck);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)dayCheck()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+/* ==== Importar errores desde Excel (.xlsx), sin librerías externas ==== */
+const canImp=()=>!ro()&&isAdmin();
+function impStart(){if(!canImp())return;const i=document.createElement('input');i.type='file';i.accept='.xlsx';i.style.display='none';document.body.appendChild(i);
+ i.onchange=()=>{const x=i.files[0];i.remove();if(x)impFile(x)};i.addEventListener('cancel',()=>i.remove());i.click()}
+async function zipOpen(buf){
+ const u=new Uint8Array(buf),dv=new DataView(buf),dec=new TextDecoder();let e=-1;
+ for(let i=u.length-22;i>=Math.max(0,u.length-70000);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break}}
+ if(e<0)throw new Error('el fichero no es un .xlsx');
+ const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out={};
+ for(let k=0;k<n;k++){if(dv.getUint32(p,true)!==0x02014b50)break;
+  const m=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true);
+  out[dec.decode(u.subarray(p+46,p+46+nl))]={m,cs,lo};p+=46+nl+el+cl}
+ return{u,dv,out}}
+async function zipText(z,name){const f=z.out[name];if(!f)return null;
+ const s=f.lo+30+z.dv.getUint16(f.lo+26,true)+z.dv.getUint16(f.lo+28,true),raw=z.u.subarray(s,s+f.cs);
+ if(f.m===0)return new TextDecoder().decode(raw);
+ if(f.m!==8)throw new Error('compresión no soportada');
+ if(typeof DecompressionStream==='undefined')throw new Error('este navegador no puede descomprimir el Excel (actualízalo)');
+ return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()}
+const xu=s=>s.replace(/&(lt|gt|amp|quot|apos|#\d+|#x[0-9a-fA-F]+);/g,(m,g)=>g==='lt'?'<':g==='gt'?'>':g==='amp'?'&':g==='quot'?'"':g==='apos'?"'":String.fromCodePoint(g[1]==='x'?parseInt(g.slice(2),16):+g.slice(1))).replace(/_x([0-9A-Fa-f]{4})_/g,(m,h)=>String.fromCharCode(parseInt(h,16)));
+const xt=b=>{let s='';for(const t of b.matchAll(/<t\b[^>]*?(?:\/>|>([\s\S]*?)<\/t>)/g))s+=t[1]||'';return xu(s)};
+function ssParse(x){const o=[];for(const m of x.matchAll(/<si\b[^>]*?(?:\/>|>([\s\S]*?)<\/si>)/g))o.push(xt((m[1]||'').replace(/<rPh\b[\s\S]*?<\/rPh>/g,'')));return o}
+function shParse(x,ss){const rows=[];
+ for(const r of x.matchAll(/<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g)){const row=[];
+  for(const c of(r[1]||'').matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){
+   const a=c[1],ref=/\br="([A-Z]+)\d+"/.exec(a);if(!ref)continue;let ci=0;for(const ch of ref[1])ci=ci*26+ch.charCodeAt(0)-64;
+   const ty=(/\bt="(\w+)"/.exec(a)||[])[1],b=c[2]||'',vm=/<v>([\s\S]*?)<\/v>/.exec(b);
+   row[ci-1]=ty==='s'?(vm?ss[+vm[1]]||'':''):ty==='inlineStr'?xt(b):(vm?xu(vm[1]):'')}
+  rows.push(row)}
+ return rows}
+async function impParse(file){
+ const z=await zipOpen(await file.arrayBuffer()),wb=await zipText(z,'xl/workbook.xml'),rl=await zipText(z,'xl/_rels/workbook.xml.rels');
+ if(!wb||!rl)throw new Error('el fichero no es un Excel válido');
+ const sx=await zipText(z,'xl/sharedStrings.xml'),ss=sx?ssParse(sx):[],rel={};
+ for(const m of rl.matchAll(/<Relationship\b([^>]*?)\/?>/g)){const i=/\bId="([^"]+)"/.exec(m[1]),t=/\bTarget="([^"]+)"/.exec(m[1]);if(i&&t)rel[i[1]]=t[1].startsWith('/')?t[1].slice(1):'xl/'+t[1]}
+ for(const m of wb.matchAll(/<sheet\b([^>]*?)\/>/g)){
+  const rid=/\br:id="([^"]+)"/.exec(m[1]),path=rid&&rel[rid[1]],xml=path&&await zipText(z,path);if(!xml)continue;
+  const rows=shParse(xml,ss);if(!rows.length)continue;
+  const H={};rows[0].forEach((h,i)=>{const k=nz(h).trim();if(k&&!(k in H))H[k]=i});
+  if(H.id===undefined||H.bloque_log===undefined)continue;
+  const g=(r,k)=>H[k]===undefined?'':String(r[H[k]]==null?'':r[H[k]]);
+  return rows.slice(1).map(r=>({id:g(r,'id').trim(),severidad:g(r,'severidad'),codigo:g(r,'codigo'),componente:g(r,'componente'),fichero:g(r,'fichero'),linea:g(r,'linea'),error_advertencia:g(r,'error_advertencia'),como_corregir:g(r,'como_corregir'),fragmento:g(r,'fragmento'),bloque_log:g(r,'bloque_log')})).filter(r=>r.id||r.bloque_log)}
+ throw new Error('no encuentro ninguna hoja con las columnas ID y Bloque_Log')}
+/* Corrige texto mal codificado en el Excel (UTF-8 leído como CP850) y normaliza saltos de línea */
+const impFix=s=>String(s==null?'':s).replace(/Ôöé/g,'│').replace(/ÔòÁ/g,'╵').replace(/Ôû▓/g,'▲').replace(/├│/g,'ó').replace(/├▒/g,'ñ').replace(/\r*\n|\r/g,'\n');
+function impTitle(r){const b=impFix(r.bloque_log);
+ let s=(b.split(/\n[ \t]*\n/)[0]||'').replace(/\s+/g,' ').trim().replace(/^(?:X|▲)\s*\[(?:ERROR|WARNING)\]\s*/i,'').replace(/\s*\[plugin [^\]]*\]\s*$/,'').trim().replace(/^(\S+?:)\s+\1\s*/,'$1 ');
+ if(!s)s=[r.codigo,impFix(r.error_advertencia)].filter(Boolean).join(': ')||('Error '+r.id);
+ if(s.length>110){s=s.slice(0,110);const i=s.lastIndexOf(' ');s=(i>60?s.slice(0,i):s).replace(/[\s,;:.]+$/,'')+'…'}
+ return s}
+function impDesc(r){const W=17,pad=s=>s+' '.repeat(Math.max(0,W-s.length)),ind=' '.repeat(W+3);
+ const F=[['ID',r.id],['Severidad',r.severidad],['Código',r.codigo],['Componente',r.componente],['Fichero',r.fichero],['Línea',r.linea],['Error_Advertencia',r.error_advertencia],['Como_corregir',r.como_corregir],['Fragmento',r.fragmento],['Bloque_Log',r.bloque_log]];
+ return F.map(([k,v])=>pad(k)+' : '+impFix(v).replace(/\s+$/,'').split('\n').map((l,i)=>i&&l?ind+l:l).join('\n')).join('\n')}
+async function impFile(file){
+ if(!canImp())return;setSt('busy','Leyendo Excel…');
+ let L;try{L=await impParse(file)}catch(e){setSt('err','Excel no válido');alert('No se pudo leer el Excel: '+e.message);return}
+ const have=new Set(tasks.filter(t=>t.xid).map(t=>t.xid)),seen=new Set(),nw=[];
+ L.forEach(r=>{if(r.id&&(have.has(r.id)||seen.has(r.id)))return;if(r.id)seen.add(r.id);nw.push(r)});
+ const dup=L.length-nw.length;
+ if(!nw.length){setSt('','Sin errores nuevos');alert('No hay errores nuevos: las '+L.length+' filas del Excel ya estaban importadas.');return}
+ if(!confirm('Se van a importar '+nw.length+' errores al backlog'+(dup?' ('+dup+' ya existían y se omiten)':'')+'.\n\nTipo: Error · Estado: Pendiente · Fecha: '+today.toLocaleDateString('es-ES')+'\n\n¿Continuar?')){setSt('','Importación cancelada');return}
+ const ids=new Set(tasks.map(t=>t.id));let nx=nid();
+ nw.forEach(r=>{while(ids.has(nx))nx++;ids.add(nx);tasks.push({id:nx,title:impTitle(r),desc:impDesc(r),start:'',end:'',status:'pendiente',owners:[],created:f(today),est:'',urgent:false,tipo:'error',xid:r.id,notes:[]})});
+ blF='error';commit();
+ alert(nw.length+' errores importados al backlog'+(dup?' ('+dup+' omitidos por estar ya importados)':'')+'.')}
+let blF='';
+function selfAssign(id){if(ro())return;if(!me()){openMe();return}const t=tasks.find(x=>x.id===id);if(!t||t.tipo!=='error'||t.owners.length||t.status!=='pendiente'){alert('Este error ya no está disponible en el backlog.');draw();return}assign(id,me().id)}
+function dshort(t){const d=t.desc||'';
+ if(t.tipo==='error'){const g=k=>{const m=d.match(new RegExp('^'+k+' *: (.*)$','m'));return m?m[1].trim():''},fi=g('Fichero').split('/').pop(),li=g('Línea');
+  return[g('Componente'),fi&&fi+(li?':'+li:'')].filter(Boolean).join(' · ')||d.slice(0,140)}
+ const s=d.replace(/\s*\n\s*/g,' · ');return s.length>160?s.slice(0,160)+'…':s}
+let blQ='',blPg=0;
+function blPage(d){const n=tasks.filter(t=>!t.owners.length&&t.status==='pendiente').length;blPg=Math.max(0,Math.min(Math.floor((n-1)/20),blPg+d));draw()}
+function blData(){const all=tasks.filter(t=>!t.owners.length&&t.status==='pendiente'),t0=nz(blQ.trim());
+ let bl=blF==='error'?all.filter(t=>t.tipo==='error'):blF==='tarea'?all.filter(t=>t.tipo!=='error'):all;
+ if(t0)bl=bl.filter(t=>nz(t.title+' '+(t.desc||'')+' '+t.notes.map(n=>n.t).join(' ')+' '+names(t)).includes(t0));
+ return{all,bl}}
+function blList(){const{bl}=blData(),MX=300;
+ return `<div class="sub" style="margin:2px 2px 8px"><b>${bl.length}</b> ${bl.length===1?'resultado':'resultados'}</div>
+ ${bl.slice(0,MX).map(t=>`<div class="row"><div class="grow"><b>${t.tipo==='error'?'🐞 ':''}${t.urgent?PI:''}${esc(t.title)}</b><div class="sub">${esc(dshort(t))||'Sin descripción'}</div></div>
+ <select style="width:150px" onchange="assign(${t.id},this.value)"><option value="">Asignar a…</option>${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+ ${t.tipo==='error'&&isUser()&&me()?`<button class="btn sm" onclick="selfAssign(${t.id})">Asignarme</button>`:''}<button class="btn ghost sm" onclick="openTask(${t.id})">Editar</button></div>`).join('')||'<div class="tip">No hay tareas en el backlog.</div>'}
+ ${bl.length>MX?`<div class="tip">Mostrando ${MX} de ${bl.length}. Al asignarlas salen de la lista; afina la búsqueda o el filtro para ver el resto.</div>`:''}`}
+function blSet(v){blQ=v;const e=$('#bl-res');if(e)e.innerHTML=blList()}
+function backlog(){
+ const{all}=blData(),ne=all.filter(t=>t.tipo==='error').length;
+ return `<div class="top"><div><h1>Backlog</h1><div class="sub">Pendientes de asignar · ${all.length-ne} tareas · ${ne} errores</div></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select style="width:auto" onchange="blF=this.value;draw()"><option value="">Todo</option><option value="tarea"${blF==='tarea'?' selected':''}>Solo tareas</option><option value="error"${blF==='error'?' selected':''}>Solo errores</option></select>${canImp()?'<button class="btn ghost" onclick="impStart()">⬆ Importar errores (Excel)</button>':''}<button class="btn" onclick="openTask(0,null)">+ Añadir al backlog</button></div></div>
+ <div class="qf" style="grid-template-columns:1fr"><div><label>Texto (título, descripción, seguimiento o persona)</label><input value="${esc(blQ)}" placeholder="Buscar…" oninput="blSet(this.value)"></div></div>
+ <div id="bl-res">${blList()}</div>`;
+}
+/* ==== fin importar ==== */
+
+const TITLE0=document.title;
+let remAct={},remDone={};try{remDone=JSON.parse(localStorage.getItem('dt_rem')||'{}')}catch(e){}
+const mine=t=>!linked()||(!!me()&&has(t,me().id));
+function remCheck(){const now=Date.now(),L=[];
+ tasks.forEach(t=>{if(t.tipo!=='reunion'||t.status==='finalizada'||!t.start||!t.hora||!mine(t))return;
+  const dt=new Date(t.start+'T'+t.hora+':00').getTime()-now;if(dt>10*60e3||dt<-15*60e3)return;
+  const ph=dt>0?'pre':'now',key=t.id+'|'+t.start+t.hora+'|'+ph;if(remDone[key])return;
+  L.push({t,ph,key,min:Math.max(1,Math.ceil(dt/60e3))})});
+ L.forEach(a=>{if(!remAct[a.key]&&window.Notification&&Notification.permission==='granted'&&document.hidden){try{new Notification((a.ph==='now'?'Reunión ahora: ':'Reunión en '+a.min+' min: ')+a.t.title,{body:a.t.hora+' · '+(a.t.reu==='ministerio'?'Con el Ministerio':'Interna'),tag:a.key,icon:'icon-192.png'})}catch(e){}}});
+ remAct={};L.forEach(a=>remAct[a.key]=a);remDraw(L)}
+function remDraw(L){const e=$('#rem');if(!e)return;e.hidden=!L.length;
+ document.title=L.length?'🔔 '+(L[0].ph==='now'?'Reunión ahora':'Reunión en '+L[0].min+' min')+' · '+TITLE0:TITLE0;
+ e.innerHTML=L.slice(0,3).map(a=>{const t=a.t,m=t.reu==='ministerio';return `<div class="remc${m?' min':''}"><div style="display:flex;gap:8px;align-items:center">${calSvg(reuC(t),+t.start.slice(8))}<b>${a.ph==='now'?'Empieza ahora':'Reunión en '+a.min+' min'} · ${esc(t.hora)}</b></div><div style="margin:4px 0 8px">${esc(t.title)}<div class="sub">${m?'Con el Ministerio':'Interna'}${t.owners.length>1?' · '+t.owners.length+' asistentes':''}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="remOpen(${t.id})">Ver</button><button class="btn ghost sm" onclick="remOk('${a.key}')">Entendido</button>${window.Notification&&Notification.permission==='default'?'<button class="btn ghost sm" onclick="remPerm()">Avisos del sistema</button>':''}</div></div>`}).join('')}
+function remOk(k){remDone[k]=Date.now();const cut=Date.now()-2*864e5;Object.keys(remDone).forEach(x=>{if(remDone[x]<cut)delete remDone[x]});try{localStorage.setItem('dt_rem',JSON.stringify(remDone))}catch(e){}remCheck()}
+function remOpen(id){openTask(id)}
+function remPerm(){Notification.requestPermission().then(()=>remCheck())}
+setInterval(remCheck,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)remCheck()});
+/* Arranque: va al final para que todo lo anterior ya esté definido */
+(async()=>{
+ let c=null;try{c=await idbGet('cache')}catch(e){}
+ if(!c){try{c=JSON.parse(localStorage.getItem('dt_cache')||'null')}catch(e){}}
+ if(c){try{people=c.people||[];tasks=c.tasks||[];auth=c.auth||null;norm()}catch(e){}}
+ try{draw()}catch(e){}
+ if(c)bootHide();                       /* hay datos guardados: se muestran ya y se actualizan en segundo plano */
+ bootMsg('Cargando configuración…');
+ try{await loadAppCfg();draw()}catch(e){}
+ bootMsg(linked()?'Descargando datos…':'Preparando…');
+ const slow=setTimeout(()=>bootMsg('Descargando datos… tarda más de lo normal'),8000);
+ try{await pull()}catch(e){}
+ clearTimeout(slow);bootMsg('Casi listo…');
+ try{draw()}catch(e){}
+ bootHide();remCheck()})();
+</script>
+</body>
+</html>
